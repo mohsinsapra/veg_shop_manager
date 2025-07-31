@@ -170,9 +170,10 @@ class AdminPage extends ConsumerWidget {
       ..sort((a, b) => a.key.compareTo(b.key));
 
     final totalItems = groupedItems.length;
-    final totalQuantity = groupedItems.values
-        .expand((items) => items)
-        .fold<int>(0, (sum, item) => sum + item.quantity);
+    final allItems = groupedItems.values.expand((items) => items).toList();
+    final totalQuantity = allItems.fold<int>(0, (sum, item) => sum + item.quantity);
+    final boughtQuantity = allItems.where((item) => item.bought).fold<int>(0, (sum, item) => sum + item.quantity);
+    final boughtItems = groupedItems.entries.where((entry) => entry.value.every((item) => item.bought)).length;
 
     return Column(
       children: [
@@ -189,14 +190,14 @@ class AdminPage extends ConsumerWidget {
               Column(
                 children: [
                   Text(
-                    totalItems.toString(),
+                    '$boughtItems/$totalItems',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: boughtItems == totalItems ? Colors.green : Theme.of(context).primaryColor,
                         ),
                   ),
                   Text(
-                    'Items',
+                    'Items Bought',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
@@ -209,18 +210,41 @@ class AdminPage extends ConsumerWidget {
               Column(
                 children: [
                   Text(
-                    totalQuantity.toString(),
+                    '$boughtQuantity/$totalQuantity',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          color: boughtQuantity == totalQuantity ? Colors.green : Theme.of(context).primaryColor,
                         ),
                   ),
                   Text(
-                    'Total Units',
+                    'Units Bought',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
               ),
+              if (boughtQuantity == totalQuantity && totalQuantity > 0) ...[
+                Container(
+                  height: 40,
+                  width: 1,
+                  color: Colors.grey[300],
+                ),
+                Column(
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 32,
+                    ),
+                    Text(
+                      'Complete!',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.green,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -253,26 +277,69 @@ class AdminPage extends ConsumerWidget {
     List<MissingItemEntity> items,
   ) {
     final totalQuantity = items.fold<int>(0, (sum, item) => sum + item.quantity);
+    final boughtQuantity = items.where((item) => item.bought).fold<int>(0, (sum, item) => sum + item.quantity);
     final shopCount = items.length;
+    final boughtShops = items.where((item) => item.bought).length;
+    final allBought = boughtShops == shopCount;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ExpansionTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: Text(
-            totalQuantity.toString(),
-            style: TextStyle(
-              color: Theme.of(context).primaryColor,
-              fontWeight: FontWeight.bold,
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              backgroundColor: allBought 
+                  ? Colors.green.withOpacity(0.1)
+                  : Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Text(
+                totalQuantity.toString(),
+                style: TextStyle(
+                  color: allBought ? Colors.green : Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-          ),
+            if (boughtQuantity > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 16,
+                    minHeight: 16,
+                  ),
+                  child: Text(
+                    boughtQuantity.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
         ),
         title: Text(
           itemName,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            decoration: allBought ? TextDecoration.lineThrough : null,
+            color: allBought ? Colors.grey : null,
+          ),
         ),
-        subtitle: Text('$shopCount shop${shopCount > 1 ? 's' : ''} need this item'),
+        subtitle: Text(
+          '$shopCount shop${shopCount > 1 ? 's' : ''} need this item${boughtShops > 0 ? ' • $boughtShops bought' : ''}',
+          style: TextStyle(
+            color: allBought ? Colors.grey : null,
+          ),
+        ),
         children: [
           ...items.map((item) => _buildShopItemTile(context, ref, item)),
           Padding(
@@ -284,9 +351,17 @@ class AdminPage extends ConsumerWidget {
                   'Total needed: $totalQuantity units',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).primaryColor,
+                        color: allBought ? Colors.grey : Theme.of(context).primaryColor,
                       ),
                 ),
+                if (boughtQuantity > 0)
+                  Text(
+                    'Bought: $boughtQuantity units',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                  ),
               ],
             ),
           ),
@@ -300,22 +375,60 @@ class AdminPage extends ConsumerWidget {
     
     return ListTile(
       dense: true,
-      leading: SizedBox(
-        width: 24,
-        child: Center(
-          child: Text(
-            item.quantity.toString(),
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ),
+      leading: Checkbox(
+        value: item.bought,
+        onChanged: (bool? value) async {
+          if (value != null) {
+            try {
+              await ref.read(missingItemNotifierProvider.notifier).toggleBoughtStatus(item.id, value);
+            } catch (error) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating item: $error'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          }
+        },
+        activeColor: Colors.green,
       ),
-      title: Text(shopName),
+      title: Row(
+        children: [
+          SizedBox(
+            width: 24,
+            child: Center(
+              child: Text(
+                item.quantity.toString(),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  decoration: item.bought ? TextDecoration.lineThrough : null,
+                  color: item.bought ? Colors.grey : null,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              shopName,
+              style: TextStyle(
+                decoration: item.bought ? TextDecoration.lineThrough : null,
+                color: item.bought ? Colors.grey : null,
+              ),
+            ),
+          ),
+        ],
+      ),
       subtitle: item.notes != null && item.notes!.isNotEmpty
           ? Text(
               item.notes!,
               style: TextStyle(
-                color: Colors.grey[600],
+                color: item.bought ? Colors.grey[400] : Colors.grey[600],
                 fontSize: 12,
+                decoration: item.bought ? TextDecoration.lineThrough : null,
               ),
             )
           : null,
@@ -434,6 +547,7 @@ class AdminPage extends ConsumerWidget {
                           ? null 
                           : notesController.text.trim(),
                       id: item.id,
+                      bought: item.bought,
                     );
               }
             },

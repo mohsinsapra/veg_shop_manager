@@ -22,6 +22,9 @@ class MissingItem extends HiveObject {
   @HiveField(5)
   final String? notes;
 
+  @HiveField(6)
+  final bool bought;
+
   MissingItem({
     required this.id,
     required this.itemName,
@@ -29,6 +32,7 @@ class MissingItem extends HiveObject {
     required this.shopId,
     required this.date,
     this.notes,
+    this.bought = false,
   });
 
   MissingItem copyWith({
@@ -38,6 +42,7 @@ class MissingItem extends HiveObject {
     String? shopId,
     DateTime? date,
     String? notes,
+    bool? bought,
   }) {
     return MissingItem(
       id: id ?? this.id,
@@ -46,6 +51,7 @@ class MissingItem extends HiveObject {
       shopId: shopId ?? this.shopId,
       date: date ?? this.date,
       notes: notes ?? this.notes,
+      bought: bought ?? this.bought,
     );
   }
 }

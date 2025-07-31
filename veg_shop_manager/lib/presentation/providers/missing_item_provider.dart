@@ -29,6 +29,10 @@ final getGroupedMissingItemsUseCaseProvider = Provider<GetGroupedMissingItemsUse
   return GetGroupedMissingItemsUseCase(ref.watch(missingItemRepositoryProvider));
 });
 
+final updateBoughtStatusUseCaseProvider = Provider<UpdateBoughtStatusUseCase>((ref) {
+  return UpdateBoughtStatusUseCase(ref.watch(missingItemRepositoryProvider));
+});
+
 final shopMissingItemsProvider = FutureProvider.family<List<MissingItemEntity>, String>((ref, shopId) async {
   final useCase = ref.watch(getTodaysMissingItemsUseCaseProvider);
   return await useCase.execute(shopId);
@@ -42,9 +46,10 @@ final adminMissingItemsProvider = FutureProvider<Map<String, List<MissingItemEnt
 class MissingItemNotifier extends StateNotifier<AsyncValue<void>> {
   final SubmitMissingItemUseCase _submitUseCase;
   final DeleteMissingItemUseCase _deleteUseCase;
+  final UpdateBoughtStatusUseCase _updateBoughtStatusUseCase;
   final Ref _ref;
 
-  MissingItemNotifier(this._submitUseCase, this._deleteUseCase, this._ref) 
+  MissingItemNotifier(this._submitUseCase, this._deleteUseCase, this._updateBoughtStatusUseCase, this._ref) 
       : super(const AsyncValue.data(null));
 
   Future<void> submitItem({
@@ -53,6 +58,7 @@ class MissingItemNotifier extends StateNotifier<AsyncValue<void>> {
     required String shopId,
     String? notes,
     String? id,
+    bool? bought,
   }) async {
     state = const AsyncValue.loading();
     
@@ -63,6 +69,7 @@ class MissingItemNotifier extends StateNotifier<AsyncValue<void>> {
         shopId: shopId,
         notes: notes,
         id: id,
+        bought: bought,
       );
       
       state = const AsyncValue.data(null);
@@ -88,12 +95,29 @@ class MissingItemNotifier extends StateNotifier<AsyncValue<void>> {
       state = AsyncValue.error(error, stackTrace);
     }
   }
+
+  Future<void> toggleBoughtStatus(String itemId, bool bought) async {
+    state = const AsyncValue.loading();
+    
+    try {
+      await _updateBoughtStatusUseCase.execute(itemId, bought);
+      
+      state = const AsyncValue.data(null);
+      
+      _ref.invalidate(shopMissingItemsProvider);
+      _ref.invalidate(adminMissingItemsProvider);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
 }
 
 final missingItemNotifierProvider = StateNotifierProvider<MissingItemNotifier, AsyncValue<void>>((ref) {
   return MissingItemNotifier(
     ref.watch(submitMissingItemUseCaseProvider),
     ref.watch(deleteMissingItemUseCaseProvider),
+    ref.watch(updateBoughtStatusUseCaseProvider),
     ref,
   );
 });

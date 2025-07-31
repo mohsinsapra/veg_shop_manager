@@ -5,6 +5,7 @@ class MissingItemEntity {
   final String shopId;
   final DateTime date;
   final String? notes;
+  final bool bought;
 
   const MissingItemEntity({
     required this.id,
@@ -13,6 +14,7 @@ class MissingItemEntity {
     required this.shopId,
     required this.date,
     this.notes,
+    this.bought = false,
   });
 
   MissingItemEntity copyWith({
@@ -22,6 +24,7 @@ class MissingItemEntity {
     String? shopId,
     DateTime? date,
     String? notes,
+    bool? bought,
   }) {
     return MissingItemEntity(
       id: id ?? this.id,
@@ -30,6 +33,7 @@ class MissingItemEntity {
       shopId: shopId ?? this.shopId,
       date: date ?? this.date,
       notes: notes ?? this.notes,
+      bought: bought ?? this.bought,
     );
   }
 
@@ -42,7 +46,8 @@ class MissingItemEntity {
         other.quantity == quantity &&
         other.shopId == shopId &&
         other.date == date &&
-        other.notes == notes;
+        other.notes == notes &&
+        other.bought == bought;
   }
 
   @override
@@ -52,6 +57,7 @@ class MissingItemEntity {
         quantity.hashCode ^
         shopId.hashCode ^
         date.hashCode ^
-        notes.hashCode;
+        notes.hashCode ^
+        bought.hashCode;
   }
 }

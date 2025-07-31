@@ -15,6 +15,7 @@ class SubmitMissingItemUseCase {
     required String shopId,
     String? notes,
     String? id,
+    bool? bought,
   }) async {
     final missingItem = MissingItem(
       id: id ?? _uuid.v4(),
@@ -23,6 +24,7 @@ class SubmitMissingItemUseCase {
       shopId: shopId,
       date: DateTime.now(),
       notes: notes?.trim(),
+      bought: bought ?? false,
     );
 
     if (id != null) {
@@ -51,6 +53,7 @@ class GetTodaysMissingItemsUseCase {
               shopId: item.shopId,
               date: item.date,
               notes: item.notes,
+              bought: item.bought,
             ))
         .toList();
   }
@@ -84,8 +87,28 @@ class GetGroupedMissingItemsUseCase {
                     shopId: item.shopId,
                     date: item.date,
                     notes: item.notes,
+                    bought: item.bought,
                   ))
               .toList(),
         ));
+  }
+}
+
+class UpdateBoughtStatusUseCase {
+  final MissingItemRepository _repository;
+
+  UpdateBoughtStatusUseCase(this._repository);
+
+  Future<void> execute(String itemId, bool bought) async {
+    final items = await _repository.getAllMissingItems();
+    final itemIndex = items.indexWhere((item) => item.id == itemId);
+    
+    if (itemIndex == -1) {
+      throw Exception('Item with id $itemId not found');
+    }
+    
+    final item = items[itemIndex];
+    final updatedItem = item.copyWith(bought: bought);
+    await _repository.updateMissingItem(updatedItem);
   }
 }

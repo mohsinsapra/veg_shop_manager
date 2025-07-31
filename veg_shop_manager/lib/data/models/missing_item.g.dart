@@ -23,13 +23,14 @@ class MissingItemAdapter extends TypeAdapter<MissingItem> {
       shopId: fields[3] as String,
       date: fields[4] as DateTime,
       notes: fields[5] as String?,
+      bought: fields[6] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, MissingItem obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class MissingItemAdapter extends TypeAdapter<MissingItem> {
       ..writeByte(4)
       ..write(obj.date)
       ..writeByte(5)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(6)
+      ..write(obj.bought);
   }
 
   @override

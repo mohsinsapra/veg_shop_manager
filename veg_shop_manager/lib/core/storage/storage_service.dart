@@ -85,6 +85,7 @@ class SharedPreferencesStorageService implements StorageService {
         shopId: json['shopId'],
         date: DateTime.parse(json['date']),
         notes: json['notes'],
+        bought: json['bought'] ?? false,
       );
     }).toList();
     
@@ -111,6 +112,7 @@ class SharedPreferencesStorageService implements StorageService {
       'shopId': item.shopId,
       'date': item.date.toIso8601String(),
       'notes': item.notes,
+      'bought': item.bought,
     })).toList();
     
     await _prefs?.setStringList('missing_items', itemsJson);
@@ -131,6 +133,7 @@ class SharedPreferencesStorageService implements StorageService {
       'shopId': item.shopId,
       'date': item.date.toIso8601String(),
       'notes': item.notes,
+      'bought': item.bought,
     })).toList();
     
     await _prefs?.setStringList('missing_items', itemsJson);
