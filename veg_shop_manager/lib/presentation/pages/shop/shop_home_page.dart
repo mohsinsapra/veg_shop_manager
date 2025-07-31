@@ -140,10 +140,21 @@ class ShopHomePage extends ConsumerWidget {
             child: const Icon(Icons.add_shopping_cart),
             backgroundColor: Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
-            label: 'Add Multiple Items',
+            label: 'Quick Add Multiple',
             onTap: () {
               if (context.mounted) {
                 context.beamToNamed('/shop/quick-add');
+              }
+            },
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.navigate_next),
+            backgroundColor: Colors.green,
+            foregroundColor: Colors.white,
+            label: 'Step by Step Add',
+            onTap: () {
+              if (context.mounted) {
+                context.beamToNamed('/shop/step-add');
               }
             },
           ),

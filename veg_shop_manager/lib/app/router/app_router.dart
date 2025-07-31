@@ -4,6 +4,7 @@ import '../../presentation/pages/login/login_page.dart';
 import '../../presentation/pages/shop/shop_home_page.dart';
 import '../../presentation/pages/shop/add_item_page.dart';
 import '../../presentation/pages/shop/quick_add_item_page.dart';
+import '../../presentation/pages/shop/step_by_step_add_page.dart';
 import '../../presentation/pages/admin/admin_page.dart';
 import '../../presentation/pages/admin/debug_admin_page.dart';
 import '../../presentation/pages/admin/shopping_history_page.dart';
@@ -28,6 +29,10 @@ class AppRouter {
         '/shop/quick-add': (context, state, data) => const BeamPage(
           key: ValueKey('shop-quick-add'),
           child: QuickAddItemPage(),
+        ),
+        '/shop/step-add': (context, state, data) => const BeamPage(
+          key: ValueKey('shop-step-add'),
+          child: StepByStepAddPage(),
         ),
         '/admin': (context, state, data) => const BeamPage(
           key: ValueKey('admin'),
