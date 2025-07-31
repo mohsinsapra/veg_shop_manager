@@ -11,6 +11,7 @@ class AppConstants {
   static const String adminPassword = 'admin123';
   
   static const String hiveBoxMissingItems = 'missing_items';
+  static const String hiveBoxShoppingHistory = 'shopping_history';
   static const String hiveBoxAuth = 'auth';
   static const String hiveBoxUsers = 'users';
   

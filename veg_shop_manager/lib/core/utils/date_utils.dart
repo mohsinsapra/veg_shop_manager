@@ -23,6 +23,10 @@ class AppDateUtils {
     return DateFormat('MMM dd, yyyy').format(date);
   }
 
+  static String formatDateTime(DateTime date) {
+    return DateFormat('MMM dd, yyyy hh:mm a').format(date);
+  }
+
   static DateTime get today => DateTime.now();
   static DateTime get todayStart => getStartOfDay(today);
   static DateTime get todayEnd => getEndOfDay(today);

@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../../data/models/missing_item.dart';
+import '../../data/models/shopping_history.dart';
 import '../constants/app_constants.dart';
 
 abstract class StorageService {
@@ -10,6 +11,9 @@ abstract class StorageService {
   Future<List<MissingItem>> getAllMissingItems();
   Future<void> saveMissingItem(MissingItem item);
   Future<void> deleteMissingItem(String id);
+  Future<List<ShoppingHistory>> getAllShoppingHistory();
+  Future<void> saveShoppingHistory(ShoppingHistory history);
+  Future<void> deleteShoppingHistory(String id);
   Future<String?> getAuthData(String key);
   Future<void> setAuthData(String key, String value);
   Future<void> removeAuthData(String key);
@@ -18,14 +22,17 @@ abstract class StorageService {
 
 class HiveStorageService implements StorageService {
   Box<MissingItem>? _missingItemsBox;
+  Box<ShoppingHistory>? _historyBox;
   Box<String>? _authBox;
 
   @override
   Future<void> init() async {
     await Hive.initFlutter();
     Hive.registerAdapter(MissingItemAdapter());
+    Hive.registerAdapter(ShoppingHistoryAdapter());
     
     _missingItemsBox = await Hive.openBox<MissingItem>(AppConstants.hiveBoxMissingItems);
+    _historyBox = await Hive.openBox<ShoppingHistory>(AppConstants.hiveBoxShoppingHistory);
     _authBox = await Hive.openBox<String>(AppConstants.hiveBoxAuth);
   }
 
@@ -42,6 +49,21 @@ class HiveStorageService implements StorageService {
   @override
   Future<void> deleteMissingItem(String id) async {
     await _missingItemsBox?.delete(id);
+  }
+
+  @override
+  Future<List<ShoppingHistory>> getAllShoppingHistory() async {
+    return _historyBox?.values.toList() ?? [];
+  }
+
+  @override
+  Future<void> saveShoppingHistory(ShoppingHistory history) async {
+    await _historyBox?.put(history.id, history);
+  }
+
+  @override
+  Future<void> deleteShoppingHistory(String id) async {
+    await _historyBox?.delete(id);
   }
 
   @override
@@ -137,6 +159,94 @@ class SharedPreferencesStorageService implements StorageService {
     })).toList();
     
     await _prefs?.setStringList('missing_items', itemsJson);
+  }
+
+  @override
+  Future<List<ShoppingHistory>> getAllShoppingHistory() async {
+    final historyJson = _prefs?.getStringList('shopping_history') ?? [];
+    final history = historyJson.map((jsonStr) {
+      final json = jsonDecode(jsonStr) as Map<String, dynamic>;
+      final itemsJson = json['items'] as List<dynamic>;
+      final items = itemsJson.map((itemJson) {
+        final item = itemJson as Map<String, dynamic>;
+        return MissingItem(
+          id: item['id'],
+          itemName: item['itemName'],
+          quantity: item['quantity'],
+          shopId: item['shopId'],
+          date: DateTime.parse(item['date']),
+          notes: item['notes'],
+          bought: item['bought'] ?? false,
+        );
+      }).toList();
+      
+      return ShoppingHistory(
+        id: json['id'],
+        completedDate: DateTime.parse(json['completedDate']),
+        originalDate: DateTime.parse(json['originalDate']),
+        items: items,
+        totalItems: json['totalItems'],
+        totalQuantity: json['totalQuantity'],
+      );
+    }).toList();
+    
+    return history;
+  }
+
+  @override
+  Future<void> saveShoppingHistory(ShoppingHistory history) async {
+    final allHistory = await getAllShoppingHistory();
+    
+    final existingIndex = allHistory.indexWhere((h) => h.id == history.id);
+    if (existingIndex != -1) {
+      allHistory[existingIndex] = history;
+    } else {
+      allHistory.add(history);
+    }
+    
+    final historyJson = allHistory.map((history) => jsonEncode({
+      'id': history.id,
+      'completedDate': history.completedDate.toIso8601String(),
+      'originalDate': history.originalDate.toIso8601String(),
+      'totalItems': history.totalItems,
+      'totalQuantity': history.totalQuantity,
+      'items': history.items.map((item) => {
+        'id': item.id,
+        'itemName': item.itemName,
+        'quantity': item.quantity,
+        'shopId': item.shopId,
+        'date': item.date.toIso8601String(),
+        'notes': item.notes,
+        'bought': item.bought,
+      }).toList(),
+    })).toList();
+    
+    await _prefs?.setStringList('shopping_history', historyJson);
+  }
+
+  @override
+  Future<void> deleteShoppingHistory(String id) async {
+    final allHistory = await getAllShoppingHistory();
+    allHistory.removeWhere((history) => history.id == id);
+    
+    final historyJson = allHistory.map((history) => jsonEncode({
+      'id': history.id,
+      'completedDate': history.completedDate.toIso8601String(),
+      'originalDate': history.originalDate.toIso8601String(),
+      'totalItems': history.totalItems,
+      'totalQuantity': history.totalQuantity,
+      'items': history.items.map((item) => {
+        'id': item.id,
+        'itemName': item.itemName,
+        'quantity': item.quantity,
+        'shopId': item.shopId,
+        'date': item.date.toIso8601String(),
+        'notes': item.notes,
+        'bought': item.bought,
+      }).toList(),
+    })).toList();
+    
+    await _prefs?.setStringList('shopping_history', historyJson);
   }
 
   @override

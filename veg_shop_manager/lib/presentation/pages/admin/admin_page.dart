@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beamer/beamer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
+import '../../providers/shopping_history_provider.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../domain/entities/missing_item_entity.dart';
@@ -37,6 +38,11 @@ class AdminPage extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () => context.beamToNamed('/admin/history'),
+            tooltip: 'Shopping History',
+          ),
           IconButton(
             icon: const Icon(Icons.bug_report),
             onPressed: () => context.beamToNamed('/admin/debug'),
@@ -248,6 +254,28 @@ class AdminPage extends ConsumerWidget {
             ],
           ),
         ),
+        
+        // Complete Shopping List Button
+        if (boughtQuantity == totalQuantity && totalQuantity > 0)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _completeShoppingList(context, ref),
+              icon: const Icon(Icons.check_circle, color: Colors.white),
+              label: const Text(
+                'Complete Shopping List',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
         
         Expanded(
           child: RefreshIndicator(
@@ -552,6 +580,50 @@ class AdminPage extends ConsumerWidget {
               }
             },
             child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _completeShoppingList(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Shopping List'),
+        content: const Text(
+          'Are you sure you want to complete this shopping list? This will move all items to history and clear the current list.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              try {
+                await ref.read(shoppingHistoryNotifierProvider.notifier).completeShoppingList();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Shopping list completed and moved to history!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (error) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error completing list: $error'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Complete'),
           ),
         ],
       ),
