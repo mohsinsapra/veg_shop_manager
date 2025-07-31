@@ -4,6 +4,7 @@ import 'package:beamer/beamer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
 import '../../../domain/entities/missing_item_entity.dart';
+import '../../../core/constants/app_constants.dart';
 
 class AddItemPage extends ConsumerStatefulWidget {
   const AddItemPage({super.key});
@@ -17,35 +18,36 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
   final _itemNameController = TextEditingController();
   final _quantityController = TextEditingController();
   final _notesController = TextEditingController();
+  final _searchController = TextEditingController();
   
   MissingItemEntity? _editingItem;
+  String _selectedCategory = 'All';
+  List<String> _filteredItems = [];
+  bool _showItemList = false;
 
-  final List<String> _commonVegetables = [
-    'Tomatoes',
-    'Onions',
-    'Potatoes',
-    'Carrots',
-    'Cucumbers',
-    'Bell Peppers',
-    'Lettuce',
-    'Spinach',
-    'Broccoli',
-    'Cauliflower',
-    'Garlic',
-    'Ginger',
-    'Green Beans',
-    'Zucchini',
-    'Eggplant',
-    'Cabbage',
-    'Corn',
-    'Peas',
-    'Radish',
-    'Celery',
-  ];
+  List<String> get _categories => ['All'] + AppConstants.predefinedItems.keys.toList();
+
+  void _filterItems() {
+    setState(() {
+      List<String> items = _selectedCategory == 'All' 
+          ? AppConstants.allPredefinedItems
+          : AppConstants.predefinedItems[_selectedCategory] ?? [];
+      
+      if (_searchController.text.isNotEmpty) {
+        items = items.where((item) => 
+            item.toLowerCase().contains(_searchController.text.toLowerCase())
+        ).toList();
+      }
+      
+      _filteredItems = items;
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    _filteredItems = AppConstants.allPredefinedItems;
+    _searchController.addListener(_filterItems);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final data = context.currentBeamLocation.data as MissingItemEntity?;
       if (data != null) {
@@ -64,6 +66,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     _itemNameController.dispose();
     _quantityController.dispose();
     _notesController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -156,10 +159,18 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       
                       TextFormField(
                         controller: _itemNameController,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Item Name *',
-                          hintText: 'e.g., Tomatoes, Onions',
-                          prefixIcon: Icon(Icons.shopping_basket),
+                          hintText: 'Type or select from list below',
+                          prefixIcon: const Icon(Icons.shopping_basket),
+                          suffixIcon: IconButton(
+                            icon: Icon(_showItemList ? Icons.expand_less : Icons.expand_more),
+                            onPressed: () {
+                              setState(() {
+                                _showItemList = !_showItemList;
+                              });
+                            },
+                          ),
                         ),
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
@@ -172,24 +183,83 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       
                       const SizedBox(height: 8),
                       
-                      // Quick selection buttons for common vegetables
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 4.0,
-                        children: _commonVegetables.take(6).map((vegetable) => 
-                          ActionChip(
-                            label: Text(vegetable, style: const TextStyle(fontSize: 12)),
-                            onPressed: () {
-                              setState(() {
-                                _itemNameController.text = vegetable;
-                              });
-                            },
-                            backgroundColor: _itemNameController.text == vegetable 
-                                ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
-                                : null,
+                      // Show item selection interface
+                      if (_showItemList) ...[
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                        ).toList(),
-                      ),
+                          child: Column(
+                            children: [
+                              // Search bar
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: const InputDecoration(
+                                    hintText: 'Search items...',
+                                    prefixIcon: Icon(Icons.search),
+                                    border: OutlineInputBorder(),
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                              
+                              // Category tabs
+                              Container(
+                                height: 40,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _categories.length,
+                                  itemBuilder: (context, index) {
+                                    final category = _categories[index];
+                                    final isSelected = category == _selectedCategory;
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                                      child: ChoiceChip(
+                                        label: Text(category, style: TextStyle(fontSize: 12)),
+                                        selected: isSelected,
+                                        onSelected: (selected) {
+                                          setState(() {
+                                            _selectedCategory = category;
+                                            _filterItems();
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                              
+                              // Items list
+                              Container(
+                                height: 200,
+                                child: ListView.builder(
+                                  itemCount: _filteredItems.length,
+                                  itemBuilder: (context, index) {
+                                    final item = _filteredItems[index];
+                                    return ListTile(
+                                      dense: true,
+                                      title: Text(item),
+                                      onTap: () {
+                                        setState(() {
+                                          _itemNameController.text = item;
+                                          _showItemList = false;
+                                        });
+                                      },
+                                      trailing: _itemNameController.text == item 
+                                          ? const Icon(Icons.check, color: Colors.green)
+                                          : null,
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ],
                       
                       const SizedBox(height: 16),
                       

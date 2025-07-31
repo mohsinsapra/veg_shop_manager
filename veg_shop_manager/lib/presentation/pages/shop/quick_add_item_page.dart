@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beamer/beamer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
+import '../../../core/constants/app_constants.dart';
 
 class BasketItem {
   final String name;
@@ -30,37 +31,23 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
   final _searchController = TextEditingController();
   bool _isSubmitting = false;
   String _searchQuery = '';
+  String _selectedCategory = 'All';
 
-  final List<String> _commonVegetables = [
-    'Tomatoes',
-    'Onions',
-    'Potatoes',
-    'Carrots',
-    'Cucumbers',
-    'Bell Peppers',
-    'Lettuce',
-    'Spinach',
-    'Broccoli',
-    'Cauliflower',
-    'Garlic',
-    'Ginger',
-    'Green Beans',
-    'Zucchini',
-    'Eggplant',
-    'Cabbage',
-    'Corn',
-    'Peas',
-    'Radish',
-    'Celery',
-    'Mushrooms',
-    'Sweet Potatoes',
-    'Avocados',
-    'Lemons',
-    'Limes',
-    'Apples',
-    'Bananas',
-    'Oranges',
-  ];
+  List<String> get _categories => ['All'] + AppConstants.predefinedItems.keys.toList();
+
+  List<String> get _filteredItems {
+    List<String> items = _selectedCategory == 'All' 
+        ? AppConstants.allPredefinedItems
+        : AppConstants.predefinedItems[_selectedCategory] ?? [];
+    
+    if (_searchQuery.isNotEmpty) {
+      items = items.where((item) => 
+          item.toLowerCase().contains(_searchQuery.toLowerCase())
+      ).toList();
+    }
+    
+    return items;
+  }
 
   @override
   void dispose() {
@@ -139,14 +126,6 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
     });
   }
 
-  List<String> get _filteredVegetables {
-    if (_searchQuery.isEmpty) {
-      return _commonVegetables;
-    }
-    return _commonVegetables
-        .where((vegetable) => vegetable.toLowerCase().contains(_searchQuery))
-        .toList();
-  }
 
   Widget _buildHighlightedText(String text, String query) {
     if (query.isEmpty) {
@@ -447,10 +426,35 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                         ),
                   ),
                   const SizedBox(height: 8),
+                  // Category filter chips
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: _categories.map((category) {
+                        final isSelected = category == _selectedCategory;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: ChoiceChip(
+                            label: Text(category, style: const TextStyle(fontSize: 12)),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = category;
+                                _searchController.clear();
+                                _updateSearchQuery('');
+                              });
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Quick search chips
                   Wrap(
                     spacing: 8.0,
                     runSpacing: 4.0,
-                    children: ['Tomatoes', 'Onions', 'Potatoes', 'Carrots', 'Peppers']
+                    children: ['Tomate', 'Cebolla', 'Patata', 'Zanahoria', 'Pimiento']
                         .map((term) => ActionChip(
                               label: Text(term, style: const TextStyle(fontSize: 12)),
                               onPressed: () {
@@ -480,7 +484,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Found ${_filteredVegetables.length} items for "$_searchQuery"',
+                    'Found ${_filteredItems.length} items for "$_searchQuery"',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.w500,
@@ -497,7 +501,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
 
           // Items grid
           Expanded(
-            child: _filteredVegetables.isEmpty
+            child: _filteredItems.isEmpty
                 ? _buildNoResultsState()
                 : GridView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -507,9 +511,9 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                       mainAxisSpacing: 12,
                       childAspectRatio: 1.2,
                     ),
-                    itemCount: _filteredVegetables.length,
+                    itemCount: _filteredItems.length,
                     itemBuilder: (context, index) {
-                final item = _filteredVegetables[index];
+                final item = _filteredItems[index];
                 final isInBasket = _basket.containsKey(item);
                 final tempQuantity = _tempQuantities[item] ?? 0;
                 final basketQuantity = isInBasket ? _basket[item]!.quantity : 0;
