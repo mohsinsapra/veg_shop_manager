@@ -59,8 +59,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> loginAsShop(String shopId) async {
+  Future<bool> loginAsShop(String shopId, String password) async {
     if (!AppConstants.predefinedShops.containsKey(shopId)) {
+      return false;
+    }
+    
+    if (AppConstants.shopPasswords[shopId] != password) {
       return false;
     }
 

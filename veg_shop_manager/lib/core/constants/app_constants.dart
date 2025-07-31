@@ -6,6 +6,12 @@ class AppConstants {
     'shop2': 'Shop 2 - Mall',
     'shop3': 'Shop 3 - Suburb',
   };
+
+  static const Map<String, String> shopPasswords = {
+    'shop1': 'shop1pass',
+    'shop2': 'shop2pass',
+    'shop3': 'shop3pass',
+  };
   
   static const String adminCredential = 'admin';
   static const String adminPassword = 'admin123';

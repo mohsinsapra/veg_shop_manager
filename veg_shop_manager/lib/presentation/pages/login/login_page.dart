@@ -52,7 +52,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     if (_isAdminLogin) {
       success = await authNotifier.loginAsAdmin(_passwordController.text);
     } else if (_selectedShop != null) {
-      success = await authNotifier.loginAsShop(_selectedShop!);
+      success = await authNotifier.loginAsShop(_selectedShop!, _passwordController.text);
     }
 
     if (success && mounted) {
@@ -93,20 +93,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     AppConstants.appName,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Multi-Shop Vegetable Stock Manager',
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.grey[600],
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 48),
-                  
+
                   Row(
                     children: [
                       Expanded(
@@ -132,16 +132,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             setState(() {
                               _isAdminLogin = value!;
                               _selectedShop = null;
-                              _passwordController.clear();
+                              if (_isAdminLogin) {
+                                _passwordController.text = 'admin123';
+                              } else {
+                                _passwordController.clear();
+                              }
                             });
                           },
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   if (!_isAdminLogin) ...[
                     DropdownButtonFormField<String>(
                       value: _selectedShop,
@@ -150,19 +154,42 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         prefixIcon: Icon(Icons.store),
                       ),
                       items: AppConstants.predefinedShops.entries
-                          .map((entry) => DropdownMenuItem(
-                                value: entry.key,
-                                child: Text(entry.value),
-                              ))
+                          .map(
+                            (entry) => DropdownMenuItem(
+                              value: entry.key,
+                              child: Text(entry.value),
+                            ),
+                          )
                           .toList(),
                       onChanged: (value) {
                         setState(() {
                           _selectedShop = value;
+                          // Auto-fill password for demo purposes
+                          if (value != null && AppConstants.shopPasswords.containsKey(value)) {
+                            _passwordController.text = AppConstants.shopPasswords[value]!;
+                          } else {
+                            _passwordController.clear();
+                          }
                         });
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please select a shop';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Shop Password',
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter shop password';
                         }
                         return null;
                       },
@@ -183,9 +210,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       },
                     ),
                   ],
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   ElevatedButton(
                     onPressed: authState.isLoading ? null : _handleLogin,
                     child: authState.isLoading
@@ -194,11 +221,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : Text(_isAdminLogin ? 'Login as Admin' : 'Login as Shop'),
+                        : Text(
+                            _isAdminLogin ? 'Login as Admin' : 'Login as Shop',
+                          ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   if (!_isAdminLogin)
                     Card(
                       child: Padding(
@@ -216,17 +245,21 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Shop Instructions',
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 8),
                             const Text(
                               '• Select your shop from the dropdown\n'
+                              '• Enter your shop password to login\n'
                               '• Add missing vegetables and quantities\n'
-                              '• View and edit today\'s submissions',
+                              '• View and edit today\'s submissions\n\n'
+                              'Demo Passwords:\n'
+                              '• Shop 1: shop1pass\n'
+                              '• Shop 2: shop2pass\n'
+                              '• Shop 3: shop3pass',
                               style: TextStyle(fontSize: 14),
                             ),
                           ],
@@ -250,9 +283,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                 const SizedBox(width: 8),
                                 Text(
                                   'Admin Access',
-                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                                  style: Theme.of(context).textTheme.titleSmall
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
