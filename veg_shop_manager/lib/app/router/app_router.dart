@@ -4,6 +4,7 @@ import '../../presentation/pages/login/login_page.dart';
 import '../../presentation/pages/shop/shop_home_page.dart';
 import '../../presentation/pages/shop/add_item_page.dart';
 import '../../presentation/pages/admin/admin_page.dart';
+import '../../presentation/pages/admin/debug_admin_page.dart';
 
 class AppRouter {
   static final routerDelegate = BeamerDelegate(
@@ -25,6 +26,10 @@ class AppRouter {
         '/admin': (context, state, data) => const BeamPage(
           key: ValueKey('admin'),
           child: AdminPage(),
+        ),
+        '/admin/debug': (context, state, data) => const BeamPage(
+          key: ValueKey('debug-admin'),
+          child: DebugAdminPage(),
         ),
       },
     ),

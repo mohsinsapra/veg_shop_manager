@@ -132,7 +132,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 }
 
 final storageServiceProvider = Provider<StorageService>((ref) {
-  return StorageServiceFactory.create();
+  return StorageServiceFactory.instance;
 });
 
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

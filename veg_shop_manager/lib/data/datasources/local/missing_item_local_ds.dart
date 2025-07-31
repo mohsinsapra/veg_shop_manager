@@ -19,9 +19,19 @@ class MissingItemLocalDataSource {
   Future<List<MissingItem>> getTodaysMissingItems() async {
     final today = AppDateUtils.today;
     final allItems = await _storageService.getAllMissingItems();
-    return allItems
+    final todaysItems = allItems
         .where((item) => AppDateUtils.isSameDay(item.date, today))
         .toList();
+    
+    // Debug: Print date filtering info
+    print('Date filtering: Today = ${AppDateUtils.formatDate(today)}');
+    print('Date filtering: All items = ${allItems.length}');
+    print('Date filtering: Today\'s items = ${todaysItems.length}');
+    for (final item in allItems) {
+      print('Item: ${item.itemName} on ${AppDateUtils.formatDate(item.date)} (same day: ${AppDateUtils.isSameDay(item.date, today)})');
+    }
+    
+    return todaysItems;
   }
 
   Future<List<MissingItem>> getTodaysMissingItemsByShop(String shopId) async {

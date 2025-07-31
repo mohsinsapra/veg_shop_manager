@@ -38,6 +38,11 @@ class AdminPage extends ConsumerWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.bug_report),
+            onPressed: () => context.beamToNamed('/admin/debug'),
+            tooltip: 'Debug View',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.refresh(adminMissingItemsProvider),
             tooltip: 'Refresh',

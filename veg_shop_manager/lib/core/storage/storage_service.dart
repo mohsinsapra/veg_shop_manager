@@ -76,7 +76,7 @@ class SharedPreferencesStorageService implements StorageService {
   @override
   Future<List<MissingItem>> getAllMissingItems() async {
     final itemsJson = _prefs?.getStringList('missing_items') ?? [];
-    return itemsJson.map((jsonStr) {
+    final items = itemsJson.map((jsonStr) {
       final json = jsonDecode(jsonStr) as Map<String, dynamic>;
       return MissingItem(
         id: json['id'],
@@ -87,6 +87,10 @@ class SharedPreferencesStorageService implements StorageService {
         notes: json['notes'],
       );
     }).toList();
+    
+    // Debug: Print the retrieved items count
+    print('SharedPreferences: Retrieved ${items.length} items total');
+    return items;
   }
 
   @override
@@ -110,6 +114,9 @@ class SharedPreferencesStorageService implements StorageService {
     })).toList();
     
     await _prefs?.setStringList('missing_items', itemsJson);
+    
+    // Debug: Print the saved items count
+    print('SharedPreferences: Saved ${items.length} items total');
   }
 
   @override

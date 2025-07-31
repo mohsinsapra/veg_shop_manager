@@ -6,7 +6,7 @@ import 'core/storage/storage_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  final storageService = StorageServiceFactory.create();
+  final storageService = StorageServiceFactory.instance;
   await storageService.init();
 
   runApp(const ProviderScope(child: VegShopApp()));
