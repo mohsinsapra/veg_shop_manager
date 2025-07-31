@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:beamer/beamer.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
 import '../../../core/utils/date_utils.dart';
@@ -16,7 +17,9 @@ class ShopHomePage extends ConsumerWidget {
 
     if (!authState.isLoggedIn || !authNotifier.isShopUser) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.beamToNamed('/');
+        if (context.mounted) {
+          context.beamToNamed('/');
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -111,21 +114,38 @@ class ShopHomePage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
+      floatingActionButton: SpeedDial(
+        animatedIcon: AnimatedIcons.menu_close,
+        animatedIconTheme: const IconThemeData(size: 22.0),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.white,
+        elevation: 8.0,
+        shape: const CircleBorder(),
+        closeManually: false,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.4,
         children: [
-          FloatingActionButton(
-            heroTag: "quick-add",
-            onPressed: () => context.beamToNamed('/shop/quick-add'),
-            tooltip: 'Quick Add Items',
-            child: const Icon(Icons.add_shopping_cart),
+          SpeedDialChild(
+            child: const Icon(Icons.add),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            label: 'Add Single Item',
+            onTap: () {
+              if (context.mounted) {
+                context.beamToNamed('/shop/add');
+              }
+            },
           ),
-          const SizedBox(height: 8),
-          FloatingActionButton.extended(
-            heroTag: "single-add",
-            onPressed: () => context.beamToNamed('/shop/add'),
-            icon: const Icon(Icons.add),
-            label: const Text('Add Single'),
+          SpeedDialChild(
+            child: const Icon(Icons.add_shopping_cart),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            label: 'Add Multiple Items',
+            onTap: () {
+              if (context.mounted) {
+                context.beamToNamed('/shop/quick-add');
+              }
+            },
           ),
         ],
       ),
@@ -244,4 +264,5 @@ class ShopHomePage extends ConsumerWidget {
       ),
     );
   }
+
 }

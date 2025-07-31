@@ -297,7 +297,9 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
 
     if (!authState.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.beamToNamed('/');
+        if (context.mounted) {
+          context.beamToNamed('/');
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

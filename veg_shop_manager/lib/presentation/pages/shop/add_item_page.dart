@@ -49,14 +49,16 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     _filteredItems = AppConstants.allPredefinedItems;
     _searchController.addListener(_filterItems);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final data = context.currentBeamLocation.data as MissingItemEntity?;
-      if (data != null) {
-        setState(() {
-          _editingItem = data;
-          _itemNameController.text = data.itemName;
-          _quantityController.text = data.quantity.toString();
-          _notesController.text = data.notes ?? '';
-        });
+      if (mounted) {
+        final data = context.currentBeamLocation.data as MissingItemEntity?;
+        if (data != null) {
+          setState(() {
+            _editingItem = data;
+            _itemNameController.text = data.itemName;
+            _quantityController.text = data.quantity.toString();
+            _notesController.text = data.notes ?? '';
+          });
+        }
       }
     });
   }
@@ -114,7 +116,9 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
 
     if (!authState.isLoggedIn) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.beamToNamed('/');
+        if (context.mounted) {
+          context.beamToNamed('/');
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

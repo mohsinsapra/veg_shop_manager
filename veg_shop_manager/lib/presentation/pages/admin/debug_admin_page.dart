@@ -29,7 +29,9 @@ class DebugAdminPage extends ConsumerWidget {
 
     if (!authState.isLoggedIn || !authNotifier.isAdmin) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        context.beamToNamed('/');
+        if (context.mounted) {
+          context.beamToNamed('/');
+        }
       });
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
