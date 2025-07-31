@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter create:*)",
+      "Bash(flutter pub:*)",
+      "Bash(mkdir:*)",
+      "Bash(cd:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter:*)",
+      "Bash(dart pub global activate:*)",
+      "Bash($HOME/.pub-cache/bin/flutterfire configure:*)",
+      "Bash(rm:*)",
+      "Bash(dart run:*)",
+      "Bash(touch:*)"
+    ],
+    "deny": []
+  }
+}
