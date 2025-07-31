@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../presentation/pages/login/login_page.dart';
 import '../../presentation/pages/shop/shop_home_page.dart';
 import '../../presentation/pages/shop/add_item_page.dart';
+import '../../presentation/pages/shop/quick_add_item_page.dart';
 import '../../presentation/pages/admin/admin_page.dart';
 import '../../presentation/pages/admin/debug_admin_page.dart';
 
@@ -22,6 +23,10 @@ class AppRouter {
         '/shop/add': (context, state, data) => const BeamPage(
           key: ValueKey('shop-add'),
           child: AddItemPage(),
+        ),
+        '/shop/quick-add': (context, state, data) => const BeamPage(
+          key: ValueKey('shop-quick-add'),
+          child: QuickAddItemPage(),
         ),
         '/admin': (context, state, data) => const BeamPage(
           key: ValueKey('admin'),

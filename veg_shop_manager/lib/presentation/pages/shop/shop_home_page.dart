@@ -111,10 +111,23 @@ class ShopHomePage extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.beamToNamed('/shop/add'),
-        icon: const Icon(Icons.add),
-        label: const Text('Add Item'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FloatingActionButton(
+            heroTag: "quick-add",
+            onPressed: () => context.beamToNamed('/shop/quick-add'),
+            tooltip: 'Quick Add Items',
+            child: const Icon(Icons.add_shopping_cart),
+          ),
+          const SizedBox(height: 8),
+          FloatingActionButton.extended(
+            heroTag: "single-add",
+            onPressed: () => context.beamToNamed('/shop/add'),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Single'),
+          ),
+        ],
       ),
     );
   }

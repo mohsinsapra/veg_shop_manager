@@ -49,10 +49,12 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final data = context.currentBeamLocation.data as MissingItemEntity?;
       if (data != null) {
-        _editingItem = data;
-        _itemNameController.text = data.itemName;
-        _quantityController.text = data.quantity.toString();
-        _notesController.text = data.notes ?? '';
+        setState(() {
+          _editingItem = data;
+          _itemNameController.text = data.itemName;
+          _quantityController.text = data.quantity.toString();
+          _notesController.text = data.notes ?? '';
+        });
       }
     });
   }
@@ -152,43 +154,41 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       ),
                       const SizedBox(height: 16),
                       
-                      Autocomplete<String>(
-                        initialValue: TextEditingValue(text: _itemNameController.text),
-                        optionsBuilder: (TextEditingValue textEditingValue) {
-                          if (textEditingValue.text.isEmpty) {
-                            return const Iterable<String>.empty();
+                      TextFormField(
+                        controller: _itemNameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Item Name *',
+                          hintText: 'e.g., Tomatoes, Onions',
+                          prefixIcon: Icon(Icons.shopping_basket),
+                        ),
+                        textCapitalization: TextCapitalization.words,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter item name';
                           }
-                          return _commonVegetables.where((option) {
-                            return option.toLowerCase().contains(
-                                textEditingValue.text.toLowerCase());
-                          });
+                          return null;
                         },
-                        fieldViewBuilder: (context, controller, focusNode, onEditingComplete) {
-                          _itemNameController.text = controller.text;
-                          return TextFormField(
-                            controller: controller,
-                            focusNode: focusNode,
-                            onEditingComplete: onEditingComplete,
-                            decoration: const InputDecoration(
-                              labelText: 'Item Name *',
-                              hintText: 'e.g., Tomatoes, Onions',
-                              prefixIcon: Icon(Icons.shopping_basket),
-                            ),
-                            textCapitalization: TextCapitalization.words,
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Please enter item name';
-                              }
-                              return null;
+                      ),
+                      
+                      const SizedBox(height: 8),
+                      
+                      // Quick selection buttons for common vegetables
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: _commonVegetables.take(6).map((vegetable) => 
+                          ActionChip(
+                            label: Text(vegetable, style: const TextStyle(fontSize: 12)),
+                            onPressed: () {
+                              setState(() {
+                                _itemNameController.text = vegetable;
+                              });
                             },
-                            onChanged: (value) {
-                              _itemNameController.text = value;
-                            },
-                          );
-                        },
-                        onSelected: (selection) {
-                          _itemNameController.text = selection;
-                        },
+                            backgroundColor: _itemNameController.text == vegetable 
+                                ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
+                                : null,
+                          ),
+                        ).toList(),
                       ),
                       
                       const SizedBox(height: 16),
@@ -277,7 +277,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        '• Use the search suggestions for common vegetables\n'
+                        '• Tap the chip buttons for quick vegetable selection\n'
                         '• Quantity can be in units, kg, or any measure you prefer\n'
                         '• Add notes for specific requirements like size or brand\n'
                         '• You can edit or delete items from the main screen',
