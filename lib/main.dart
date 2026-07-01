@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'core/firebase/firebase_init.dart';
 import 'core/storage/storage_service.dart';
+import 'presentation/providers/locale_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,5 +14,19 @@ void main() async {
   final storageService = StorageServiceFactory.instance;
   await storageService.init();
 
-  runApp(const ProviderScope(child: VegShopApp()));
+  final savedCode = await storageService.getLocale();
+  final initialLocale = savedCode == null
+      ? defaultAppLocale
+      : (savedCode == 'en' ? const Locale('en') : const Locale('es'));
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        localeProvider.overrideWith(
+          (ref) => LocaleController(storageService, initialLocale),
+        ),
+      ],
+      child: const VegShopApp(),
+    ),
+  );
 }
