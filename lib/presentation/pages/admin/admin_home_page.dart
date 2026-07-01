@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/firebase_auth_provider.dart';
+import 'admin_dashboard_page.dart';
+import 'history_page.dart';
 import 'shops_management_page.dart';
 import 'catalog_management_page.dart';
 import 'members_management_page.dart';
@@ -15,14 +17,24 @@ class AdminHomePage extends ConsumerStatefulWidget {
 class _AdminHomePageState extends ConsumerState<AdminHomePage> {
   int _index = 0;
 
-  static const _titles = ['Shops', 'Catalog', 'Members'];
-  static const _icons = [Icons.store, Icons.eco, Icons.people];
+  static const _titles = ['Today', 'History', 'Shops', 'Catalog', 'Members'];
+  static const _icons = [
+    Icons.today,
+    Icons.history,
+    Icons.store,
+    Icons.eco,
+    Icons.people,
+  ];
 
   Widget _body() {
     switch (_index) {
       case 0:
-        return const ShopsManagementPage();
+        return const AdminDashboardPage();
       case 1:
+        return const HistoryPage();
+      case 2:
+        return const ShopsManagementPage();
+      case 3:
         return const CatalogManagementPage();
       default:
         return const MembersManagementPage();
