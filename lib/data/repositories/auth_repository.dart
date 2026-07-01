@@ -1,9 +1,12 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../domain/entities/member_entity.dart';
 import 'member_repository.dart';
 
 abstract class GoogleAuthenticator {
+  /// Performs the platform Google sign-in. Firebase auth state updates as a
+  /// result; the returned email is informational (null if cancelled).
   Future<String?> signInAndGetEmail();
 }
 
@@ -13,6 +16,12 @@ class FirebaseGoogleAuthenticator implements GoogleAuthenticator {
 
   @override
   Future<String?> signInAndGetEmail() async {
+    if (kIsWeb) {
+      // On web, use Firebase's hosted popup handler — it runs through the
+      // project's pre-authorized auth domain, avoiding OAuth origin_mismatch.
+      final cred = await _auth.signInWithPopup(GoogleAuthProvider());
+      return cred.user?.email;
+    }
     final googleUser = await GoogleSignIn().signIn();
     if (googleUser == null) return null; // cancelled
     final googleAuth = await googleUser.authentication;
@@ -20,8 +29,8 @@ class FirebaseGoogleAuthenticator implements GoogleAuthenticator {
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
     );
-    final cred = await _auth.signInWithCredential(credential);
-    return cred.user?.email;
+    await _auth.signInWithCredential(credential);
+    return _auth.currentUser?.email;
   }
 }
 
@@ -32,29 +41,23 @@ class AuthRepository {
 
   AuthRepository(this._auth, this._members, this._google);
 
+  /// Fires on every sign-in / sign-out / session-restore. This is the single
+  /// source of truth for auth state — the controller listens to it rather than
+  /// checking currentUser once (which is null before web restore completes).
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   User? get currentUser => _auth.currentUser;
 
-  /// Resolves the whitelisted member for the currently signed-in Firebase user,
-  /// used to restore a session on app launch. Returns null if there is no
-  /// signed-in user, or the user's email is not an active member.
-  Future<MemberEntity?> resolveCurrentMember() async {
-    final email = _auth.currentUser?.email;
+  /// Kicks off the Google sign-in flow. The result is delivered via
+  /// [authStateChanges], not this future.
+  Future<void> beginGoogleSignIn() => _google.signInAndGetEmail();
+
+  /// Resolves the whitelisted, active member for [email]. Returns null if the
+  /// email is not an active member. Links the Firebase uid on first resolve.
+  Future<MemberEntity?> resolveMember(String? email) async {
     if (email == null) return null;
     final member = await _members.findByEmail(email);
     if (member == null || !member.active) return null;
-    return member;
-  }
-
-  Future<MemberEntity?> signInWithGoogle() async {
-    final email = await _google.signInAndGetEmail();
-    if (email == null) return null;
-    final member = await _members.findByEmail(email);
-    if (member == null || !member.active) {
-      await _auth.signOut();
-      return null;
-    }
     if (member.uid == null && _auth.currentUser != null) {
       await _members.linkUid(member.id, _auth.currentUser!.uid);
     }

@@ -6,7 +6,12 @@ class MemberRepository {
   MemberRepository(this._refs);
 
   Future<MemberEntity?> findByEmail(String email) async {
-    final doc = await _refs.members.doc(email.toLowerCase()).get();
+    // Guard against a stalled read so the UI surfaces an error instead of
+    // hanging on a spinner if the network is unreachable.
+    final doc = await _refs.members
+        .doc(email.toLowerCase())
+        .get()
+        .timeout(const Duration(seconds: 15));
     if (!doc.exists) return null;
     return MemberEntity.fromMap(doc.id, doc.data()!);
   }

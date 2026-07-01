@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/member_repository.dart';
@@ -30,46 +32,51 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 class AuthController extends StateNotifier<AuthSessionState> {
   final AuthRepository _repo;
-  AuthController(this._repo) : super(const AuthSessionState(AuthStatus.unknown, null)) {
-    _restore();
+  late final StreamSubscription<User?> _sub;
+
+  AuthController(this._repo)
+      : super(const AuthSessionState(AuthStatus.unknown, null)) {
+    // Drive all state from the auth stream: it fires on sign-in, sign-out, and
+    // when a persisted web session is restored (which happens asynchronously
+    // after startup, so a one-shot currentUser check would miss it).
+    _sub = _repo.authStateChanges().listen(_onAuthChanged);
   }
 
-  /// On launch, restore any persisted Firebase session and re-resolve the
-  /// member so a signed-in user stays signed in across restarts.
-  Future<void> _restore() async {
-    try {
-      if (_repo.currentUser == null) {
-        state = const AuthSessionState(AuthStatus.signedOut, null);
-        return;
-      }
-      final member = await _repo.resolveCurrentMember();
-      if (member == null) {
-        await _repo.signOut();
-        state = const AuthSessionState(AuthStatus.noAccess, null);
-      } else {
-        state = AuthSessionState(AuthStatus.signedIn, member);
-      }
-    } catch (_) {
+  Future<void> _onAuthChanged(User? user) async {
+    if (user == null) {
       state = const AuthSessionState(AuthStatus.signedOut, null);
+      return;
     }
-  }
-
-  Future<void> signIn() async {
     try {
-      final member = await _repo.signInWithGoogle();
+      final member = await _repo.resolveMember(user.email);
       if (member == null) {
+        // Signed into Google but not a whitelisted member. Stay Firebase-authed
+        // (rules block all data) and show the no-access screen.
         state = const AuthSessionState(AuthStatus.noAccess, null);
       } else {
         state = AuthSessionState(AuthStatus.signedIn, member);
       }
     } catch (e) {
-      state = AuthSessionState(AuthStatus.signedOut, null, error: 'Sign-in failed: $e');
+      state = AuthSessionState(AuthStatus.signedOut, null,
+          error: 'Could not load your account: $e');
     }
   }
 
-  Future<void> signOut() async {
-    await _repo.signOut();
-    state = const AuthSessionState(AuthStatus.signedOut, null);
+  Future<void> signIn() async {
+    try {
+      await _repo.beginGoogleSignIn();
+    } catch (e) {
+      state = AuthSessionState(AuthStatus.signedOut, null,
+          error: 'Sign-in failed: $e');
+    }
+  }
+
+  Future<void> signOut() => _repo.signOut();
+
+  @override
+  void dispose() {
+    _sub.cancel();
+    super.dispose();
   }
 }
 
