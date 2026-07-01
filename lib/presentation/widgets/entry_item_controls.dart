@@ -102,7 +102,9 @@ class EntryCard extends StatelessWidget {
     final active = qty > 0;
     return Card(
       margin: const EdgeInsets.all(4),
-      color: active ? Colors.green.withValues(alpha: 0.08) : null,
+      elevation: 0,
+      surfaceTintColor: Colors.transparent,
+      color: active ? const Color(0xFFEAF7EC) : Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
         side: active
