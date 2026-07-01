@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import '../../data/pdf/shopping_pdf_service.dart';
@@ -11,10 +12,19 @@ Future<ShoppingPdfService> buildPdfService() async {
   return ShoppingPdfService(base: base, bold: bold);
 }
 
-/// Opens the platform print / share dialog for the given PDF bytes (prints on
-/// desktop/mobile, uses the browser print dialog on web).
-Future<void> printBytes(Uint8List bytes, {String name = 'greenchain.pdf'}) {
-  return Printing.layoutPdf(onLayout: (_) async => bytes, name: name);
+/// Delivers the PDF appropriately for the platform:
+/// - Mobile (Android/iOS, incl. mobile browsers): the native share sheet, which
+///   offers Print, Save to Files, and send. `layoutPdf`'s print dialog is
+///   unreliable on mobile, so we share instead.
+/// - Desktop / desktop web: the print dialog.
+Future<void> printBytes(Uint8List bytes, {String name = 'greenchain.pdf'}) async {
+  final isMobile = defaultTargetPlatform == TargetPlatform.android ||
+      defaultTargetPlatform == TargetPlatform.iOS;
+  if (isMobile) {
+    await Printing.sharePdf(bytes: bytes, filename: name);
+  } else {
+    await Printing.layoutPdf(onLayout: (_) async => bytes, name: name);
+  }
 }
 
 /// Runs a build+print action, surfacing any failure as a SnackBar instead of
