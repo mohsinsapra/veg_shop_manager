@@ -29,11 +29,11 @@ deploy: build
 	@echo "Deployed to $(DEPLOY_DIR)"
 	@echo "Commit & push with:  make deploy-push   (or do it manually in that folder)"
 
-## Build, copy, then commit & push the GitHub Pages folder
+## Build, copy, then commit & push the GitHub Pages folder (one command)
 deploy-push: deploy
 	cd "$(DEPLOY_DIR)" && git add -A && \
-		git commit -m "deploy $$(date +%Y-%m-%dT%H:%M)" && \
-		git push
+		(git diff --cached --quiet || git commit -m "deploy $$(date +%Y-%m-%dT%H:%M)") && \
+		git push -u origin HEAD
 
 ## Run locally in Chrome
 run:
