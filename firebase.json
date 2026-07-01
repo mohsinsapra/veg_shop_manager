@@ -1,0 +1,34 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "veg-inventory",
+          "appId": "1:1091225187710:android:d3eb82ae7d99330f7c6f2f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "veg-inventory",
+          "appId": "1:1091225187710:ios:f0b56b2e2c682c157c6f2f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "veg-inventory",
+          "configurations": {
+            "android": "1:1091225187710:android:d3eb82ae7d99330f7c6f2f",
+            "ios": "1:1091225187710:ios:f0b56b2e2c682c157c6f2f",
+            "web": "1:1091225187710:web:6da3b5d773ad78ba7c6f2f"
+          }
+        }
+      }
+    }
+  }
+}

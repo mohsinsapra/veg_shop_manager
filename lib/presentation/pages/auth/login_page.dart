@@ -7,6 +7,7 @@ class LoginPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final error = ref.watch(authControllerProvider).error;
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -23,6 +24,14 @@ class LoginPage extends ConsumerWidget {
                 label: const Text('Sign in with Google'),
                 onPressed: () => ref.read(authControllerProvider.notifier).signIn(),
               ),
+              if (error != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
             ],
           ),
         ),

@@ -9,7 +9,8 @@ enum AuthStatus { unknown, signedOut, noAccess, signedIn }
 class AuthSessionState {
   final AuthStatus status;
   final MemberEntity? member;
-  const AuthSessionState(this.status, this.member);
+  final String? error;
+  const AuthSessionState(this.status, this.member, {this.error});
 
   bool get isAdmin => member?.isAdmin ?? false;
 }
@@ -29,14 +30,40 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 class AuthController extends StateNotifier<AuthSessionState> {
   final AuthRepository _repo;
-  AuthController(this._repo) : super(const AuthSessionState(AuthStatus.signedOut, null));
+  AuthController(this._repo) : super(const AuthSessionState(AuthStatus.unknown, null)) {
+    _restore();
+  }
+
+  /// On launch, restore any persisted Firebase session and re-resolve the
+  /// member so a signed-in user stays signed in across restarts.
+  Future<void> _restore() async {
+    try {
+      if (_repo.currentUser == null) {
+        state = const AuthSessionState(AuthStatus.signedOut, null);
+        return;
+      }
+      final member = await _repo.resolveCurrentMember();
+      if (member == null) {
+        await _repo.signOut();
+        state = const AuthSessionState(AuthStatus.noAccess, null);
+      } else {
+        state = AuthSessionState(AuthStatus.signedIn, member);
+      }
+    } catch (_) {
+      state = const AuthSessionState(AuthStatus.signedOut, null);
+    }
+  }
 
   Future<void> signIn() async {
-    final member = await _repo.signInWithGoogle();
-    if (member == null) {
-      state = const AuthSessionState(AuthStatus.noAccess, null);
-    } else {
-      state = AuthSessionState(AuthStatus.signedIn, member);
+    try {
+      final member = await _repo.signInWithGoogle();
+      if (member == null) {
+        state = const AuthSessionState(AuthStatus.noAccess, null);
+      } else {
+        state = AuthSessionState(AuthStatus.signedIn, member);
+      }
+    } catch (e) {
+      state = AuthSessionState(AuthStatus.signedOut, null, error: 'Sign-in failed: $e');
     }
   }
 

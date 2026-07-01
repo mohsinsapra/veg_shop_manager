@@ -34,6 +34,19 @@ class AuthRepository {
 
   Stream<User?> authStateChanges() => _auth.authStateChanges();
 
+  User? get currentUser => _auth.currentUser;
+
+  /// Resolves the whitelisted member for the currently signed-in Firebase user,
+  /// used to restore a session on app launch. Returns null if there is no
+  /// signed-in user, or the user's email is not an active member.
+  Future<MemberEntity?> resolveCurrentMember() async {
+    final email = _auth.currentUser?.email;
+    if (email == null) return null;
+    final member = await _members.findByEmail(email);
+    if (member == null || !member.active) return null;
+    return member;
+  }
+
   Future<MemberEntity?> signInWithGoogle() async {
     final email = await _google.signInAndGetEmail();
     if (email == null) return null;

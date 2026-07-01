@@ -1,6 +1,6 @@
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
-import '../../presentation/pages/login/login_page.dart';
+import '../../presentation/pages/auth/auth_gate.dart';
 import '../../presentation/pages/shop/shop_home_page.dart';
 import '../../presentation/pages/shop/add_item_page.dart';
 import '../../presentation/pages/shop/quick_add_item_page.dart';
@@ -15,8 +15,8 @@ class AppRouter {
     locationBuilder: RoutesLocationBuilder(
       routes: {
         '/': (context, state, data) => const BeamPage(
-          key: ValueKey('login'),
-          child: LoginPage(),
+          key: ValueKey('auth-gate'),
+          child: AuthGate(),
         ),
         '/shop': (context, state, data) => const BeamPage(
           key: ValueKey('shop'),

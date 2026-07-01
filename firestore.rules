@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    function emailKey() { return request.auth.token.email.lower(); }
+    function memberPath() {
+      return /databases/$(database)/documents/members/$(emailKey());
+    }
+    function memberExists() { return signedIn() && exists(memberPath()); }
+    function memberData() { return get(memberPath()).data; }
+    function isActiveMember() {
+      return memberExists() && memberData().active == true;
+    }
+    function isAdmin() {
+      return isActiveMember() && memberData().role == 'admin';
+    }
+    function memberShops() { return memberData().shopIds; }
+
+    match /members/{email} {
+      // A user may read only their own member doc; admins may read all.
+      allow get: if signedIn() && (email == emailKey() || isAdmin());
+      allow list: if isAdmin();
+      allow write: if isAdmin() ||
+        // allow a user to link their own uid on first sign-in
+        (signedIn() && email == emailKey() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['uid']));
+    }
+
+    match /shops/{id} {
+      allow read: if isActiveMember();
+      allow write: if isAdmin();
+    }
+    match /catalogItems/{id} {
+      allow read: if isActiveMember();
+      allow write: if isAdmin();
+    }
+    match /cycles/{id} {
+      allow read: if isActiveMember();
+      allow write: if isActiveMember(); // members open cycles by adding entries
+    }
+    match /entries/{id} {
+      allow read: if isActiveMember();
+      allow create, update, delete: if isAdmin() ||
+        (isActiveMember() && request.resource.data.shopId in memberShops());
+    }
+  }
+}
