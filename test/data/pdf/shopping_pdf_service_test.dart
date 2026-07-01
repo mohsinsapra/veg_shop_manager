@@ -1,11 +1,19 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:veg_shop_manager/data/pdf/shopping_pdf_service.dart';
 import 'package:veg_shop_manager/domain/entities/catalog_item_entity.dart';
 import 'package:veg_shop_manager/domain/entities/shop_entity.dart';
+import 'package:veg_shop_manager/l10n/app_localizations.dart';
 
 void main() {
   final svc = ShoppingPdfService();
   final date = DateTime.utc(2026, 7, 1);
+  late AppLocalizations l10n;
+
+  setUpAll(() async {
+    TestWidgetsFlutterBinding.ensureInitialized();
+    l10n = await AppLocalizations.delegate.load(const Locale('es'));
+  });
 
   bool isPdf(List<int> bytes) =>
       bytes.length > 4 &&
@@ -22,6 +30,7 @@ void main() {
         PdfLine('Vegetables', 'Apio', 5),
         PdfLine('Vegetables', 'Acelga', 0),
       ],
+      l10n: l10n,
     );
     expect(isPdf(bytes), isTrue);
   });
@@ -36,6 +45,7 @@ void main() {
         CatalogItemEntity(id: 'i2', name: 'Brócoli', category: 'Vegetables', sortOrder: 1, active: true),
       ],
       qtyByItem: const {'i1': 5},
+      l10n: l10n,
     );
     expect(isPdf(bytes), isTrue);
   });
@@ -53,6 +63,7 @@ void main() {
       qtyByItemShop: const {
         'i1': {'s1': 5, 's2': 3},
       },
+      l10n: l10n,
     );
     expect(isPdf(bytes), isTrue);
   });
