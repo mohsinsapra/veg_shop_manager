@@ -11,7 +11,8 @@
       "Bash($HOME/.pub-cache/bin/flutterfire configure:*)",
       "Bash(rm:*)",
       "Bash(dart run:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }

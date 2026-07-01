@@ -12,6 +12,9 @@ import '../../presentation/pages/admin/shopping_history_page.dart';
 class AppRouter {
   static final routerDelegate = BeamerDelegate(
     initialPath: '/',
+    // Keep the browser tab title from index.html ("GreenChain") instead of
+    // letting Beamer replace it with the route path (e.g. "/").
+    setBrowserTabTitle: false,
     locationBuilder: RoutesLocationBuilder(
       routes: {
         '/': (context, state, data) => const BeamPage(
