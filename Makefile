@@ -2,15 +2,15 @@
 #
 # The deploy folder is a separate git repo published via GitHub Pages.
 #
-# BASE_HREF must match how the site is served:
-#   - Project page  https://<user>.github.io/veg_shop_manager_build/  -> /veg_shop_manager_build/
-#   - User/root page or custom domain                                 -> /
+# BASE_HREF must match how the site is served. The deploy folder is the
+# gh-pages branch of github.com/mohsinsapra/veg_shop_manager, so the site is
+# served at https://mohsinsapra.github.io/veg_shop_manager/ -> /veg_shop_manager/
 # Override on the command line if needed, e.g.:
-#   make deploy BASE_HREF=/
+#   make deploy BASE_HREF=/                       (custom domain / user page)
 #   make deploy DEPLOY_DIR="/path/to/other/folder"
 
 DEPLOY_DIR ?= /Users/muhammadmohsin/Documents/Learning/Nabeel Spain/veg_shop_manager_build
-BASE_HREF  ?= /veg_shop_manager_build/
+BASE_HREF  ?= /veg_shop_manager/
 
 .PHONY: build deploy deploy-push clean run test
 
