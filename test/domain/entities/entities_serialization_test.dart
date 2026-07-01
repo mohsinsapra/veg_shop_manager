@@ -37,4 +37,25 @@ void main() {
     expect(map['status'], 'open');
     expect(CycleEntity.fromMap('c1', map), c);
   });
+
+  test('CycleEntity round-trips hiddenAt through toMap/fromMap', () {
+    final c = CycleEntity(
+      id: 'c1',
+      status: CycleStatus.completed,
+      openedAt: DateTime.utc(2026, 7, 1, 8),
+      completedAt: DateTime.utc(2026, 7, 1, 20),
+      hiddenAt: DateTime.utc(2026, 7, 2, 9),
+    );
+    final back = CycleEntity.fromMap('c1', c.toMap());
+    expect(back.hiddenAt, DateTime.utc(2026, 7, 2, 9));
+  });
+
+  test('CycleEntity.fromMap treats missing hiddenAt as null', () {
+    final map = {
+      'status': 'completed',
+      'openedAt': DateTime.utc(2026, 7, 1).toIso8601String(),
+      'completedAt': DateTime.utc(2026, 7, 1).toIso8601String(),
+    };
+    expect(CycleEntity.fromMap('c1', map).hiddenAt, isNull);
+  });
 }
