@@ -153,14 +153,16 @@ class AdminDashboardPage extends ConsumerWidget {
     for (final e in entries) {
       qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
     }
-    final svc = await buildPdfService();
-    final bytes = await svc.adminFullGrid(
-      date: DateTime.now(),
-      shops: shops,
-      catalog: catalog,
-      qtyByItemShop: qty,
+    await runPrint(
+      context,
+      (svc) => svc.adminFullGrid(
+        date: DateTime.now(),
+        shops: shops,
+        catalog: catalog,
+        qtyByItemShop: qty,
+      ),
+      name: 'greenchain-combined.pdf',
     );
-    await printBytes(bytes, name: 'greenchain-combined.pdf');
   }
 
   Future<void> _printShop(BuildContext context, WidgetRef ref,
@@ -174,13 +176,15 @@ class AdminDashboardPage extends ConsumerWidget {
       for (final e in entries.where((e) => e.shopId == shopId))
         PdfLine('', e.itemName, e.quantity),
     ]..sort((a, b) => a.itemName.compareTo(b.itemName));
-    final svc = await buildPdfService();
-    final bytes = await svc.shopCompact(
-      shopName: shop.name,
-      date: DateTime.now(),
-      lines: lines,
+    await runPrint(
+      context,
+      (svc) => svc.shopCompact(
+        shopName: shop.name,
+        date: DateTime.now(),
+        lines: lines,
+      ),
+      name: 'greenchain-${shop.code}.pdf',
     );
-    await printBytes(bytes, name: 'greenchain-${shop.code}.pdf');
   }
 
   void _confirmComplete(BuildContext context, WidgetRef ref) {

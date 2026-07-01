@@ -117,11 +117,14 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     final lines = [
       for (final c in catalog) PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
     ];
-    final svc = await buildPdfService();
-    final bytes = fullSheet
-        ? await svc.shopGrid(shopName: shop.name, date: DateTime.now(), lines: lines)
-        : await svc.shopCompact(shopName: shop.name, date: DateTime.now(), lines: lines);
-    await printBytes(bytes, name: 'greenchain-${shop.code}.pdf');
+    if (!mounted) return;
+    await runPrint(
+      context,
+      (svc) => fullSheet
+          ? svc.shopGrid(shopName: shop.name, date: DateTime.now(), lines: lines)
+          : svc.shopCompact(shopName: shop.name, date: DateTime.now(), lines: lines),
+      name: 'greenchain-${shop.code}.pdf',
+    );
   }
 
   Widget _shopSelector(List<ShopEntity> shops) {
