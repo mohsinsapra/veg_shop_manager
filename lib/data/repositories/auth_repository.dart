@@ -19,10 +19,18 @@ class FirebaseGoogleAuthenticator implements GoogleAuthenticator {
     if (kIsWeb) {
       // On web, use Firebase's hosted popup handler — it runs through the
       // project's pre-authorized auth domain, avoiding OAuth origin_mismatch.
-      final cred = await _auth.signInWithPopup(GoogleAuthProvider());
+      // Force the account chooser every time instead of silently reusing the
+      // account already signed in to Google.
+      final provider = GoogleAuthProvider()
+        ..setCustomParameters({'prompt': 'select_account'});
+      final cred = await _auth.signInWithPopup(provider);
       return cred.user?.email;
     }
-    final googleUser = await GoogleSignIn().signIn();
+    final googleSignIn = GoogleSignIn();
+    // Clear any cached Google session so the native picker always appears,
+    // letting the user choose which account to sign in with.
+    await googleSignIn.signOut();
+    final googleUser = await googleSignIn.signIn();
     if (googleUser == null) return null; // cancelled
     final googleAuth = await googleUser.authentication;
     final credential = GoogleAuthProvider.credential(
