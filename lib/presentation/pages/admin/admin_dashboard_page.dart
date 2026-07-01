@@ -17,6 +17,8 @@ class AdminDashboardPage extends ConsumerWidget {
     final entriesAsync = ref.watch(openCycleEntriesProvider);
     final shops = ref.watch(shopsProvider).valueOrNull ?? const <ShopEntity>[];
     final shopName = {for (final s in shops) s.id: '${s.name} (${s.code})'};
+    final catalog = ref.watch(catalogProvider).valueOrNull ?? const [];
+    final orderById = {for (final c in catalog) c.id: c.sortOrder};
 
     return entriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -38,7 +40,13 @@ class AdminDashboardPage extends ConsumerWidget {
         for (final e in entries) {
           byItem.putIfAbsent(e.itemName, () => []).add(e);
         }
-        final itemNames = byItem.keys.toList()..sort();
+        // Order the shopping list by catalog (paper) order.
+        final itemNames = byItem.keys.toList()
+          ..sort((a, b) {
+            final sa = orderById[byItem[a]!.first.itemId] ?? 1 << 30;
+            final sb = orderById[byItem[b]!.first.itemId] ?? 1 << 30;
+            return sa != sb ? sa.compareTo(sb) : a.compareTo(b);
+          });
 
         final totalUnits = entries.fold<int>(0, (s, e) => s + e.quantity);
         final boughtUnits = entries

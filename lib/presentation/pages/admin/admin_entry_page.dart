@@ -104,26 +104,16 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
   Widget _grid(BuildContext context, List<CatalogItemEntity> catalog,
       Map<String, int> liveQty, List<ShopEntity> shops, String memberId) {
+    // Flat list in catalog (paper) order.
     final items = catalog
         .where((c) => c.active)
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
-    final byCategory = <String, List<CatalogItemEntity>>{};
-    for (final it in items) {
-      byCategory.putIfAbsent(it.category, () => []).add(it);
-    }
 
     return ListView(
       children: [
-        for (final entry in byCategory.entries) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(entry.key,
-                style: Theme.of(context).textTheme.titleMedium),
-          ),
-          for (final item in entry.value)
-            _row(item, _local[item.id] ?? liveQty[item.id] ?? 0, shops, memberId),
-        ],
+        for (final item in items)
+          _row(item, _local[item.id] ?? liveQty[item.id] ?? 0, shops, memberId),
         const SizedBox(height: 80),
       ],
     );

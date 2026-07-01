@@ -46,55 +46,72 @@ class ShoppingPdfService {
       catalog.where((c) => c.active).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
-  /// Core single-page, three-column grid used by every full-sheet template.
+  /// Core single-page grid: ONE continuous table with three item-blocks laid
+  /// side by side (like the paper), so there are no gaps between sub-tables.
+  /// Each block is: Item | <value columns> (e.g. L S T P Total).
   Future<Uint8List> _paperGrid({
     required String title,
     required DateTime date,
     required List<String> columnHeaders,
     required List<_PaperRow> rows,
   }) {
-    final perCol = math.max(1, (rows.length / 3).ceil());
-    List<_PaperRow> slice(int i) {
-      final start = i * perCol;
-      if (start >= rows.length) return const [];
-      return rows.sublist(start, math.min(start + perCol, rows.length));
-    }
+    const blocks = 3;
+    final perCol = math.max(1, (rows.length / blocks).ceil());
+    final valueCols = columnHeaders.length;
+    final perBlock = 1 + valueCols; // item name + value columns
 
-    pw.Widget cell(String text, {bool bold = false}) => pw.Padding(
-          padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+    pw.Widget cell(String text, {bool bold = false, bool header = false}) =>
+        pw.Container(
+          alignment: header ? pw.Alignment.center : pw.Alignment.centerLeft,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1.2),
           child: pw.Text(
             text,
             style: pw.TextStyle(
-                fontSize: 6.5,
-                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal),
+                fontSize: 6.2,
+                fontWeight:
+                    (bold || header) ? pw.FontWeight.bold : pw.FontWeight.normal),
           ),
         );
 
-    pw.TableRow row(String name, List<String> cells, {bool bold = false}) =>
-        pw.TableRow(children: [
-          cell(name, bold: bold),
-          for (final c in cells) cell(c, bold: bold),
-        ]);
+    // Header row repeated for each block.
+    final header = <pw.Widget>[];
+    for (var b = 0; b < blocks; b++) {
+      header.add(cell('Item', bold: true));
+      for (final h in columnHeaders) {
+        header.add(cell(h, header: true));
+      }
+    }
 
-    pw.Widget block(List<_PaperRow> colRows) {
-      return pw.Table(
-        border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey600),
-        columnWidths: {
-          0: const pw.FlexColumnWidth(3),
-          for (var i = 1; i <= columnHeaders.length; i++)
-            i: const pw.FixedColumnWidth(13),
-        },
-        children: [
-          row('Item', columnHeaders, bold: true),
-          for (final r in colRows) row(r.name, r.cells),
-        ],
-      );
+    final tableRows = <pw.TableRow>[pw.TableRow(children: header)];
+    for (var i = 0; i < perCol; i++) {
+      final cells = <pw.Widget>[];
+      for (var b = 0; b < blocks; b++) {
+        final idx = b * perCol + i;
+        if (idx < rows.length) {
+          cells.add(cell(rows[idx].name));
+          for (final c in rows[idx].cells) {
+            cells.add(cell(c, header: true));
+          }
+        } else {
+          for (var k = 0; k < perBlock; k++) {
+            cells.add(cell(''));
+          }
+        }
+      }
+      tableRows.add(pw.TableRow(children: cells));
+    }
+
+    final widths = <int, pw.TableColumnWidth>{};
+    for (var c = 0; c < perBlock * blocks; c++) {
+      widths[c] = (c % perBlock == 0)
+          ? const pw.FlexColumnWidth(2.4)
+          : const pw.FixedColumnWidth(11);
     }
 
     final doc = _doc();
     doc.addPage(pw.Page(
       pageFormat: PdfPageFormat.a4,
-      margin: const pw.EdgeInsets.all(14),
+      margin: const pw.EdgeInsets.all(12),
       build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
@@ -102,17 +119,10 @@ class ShoppingPdfService {
               style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
           pw.Text(_df.format(date), style: const pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 4),
-          pw.Expanded(
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: [
-                pw.Expanded(child: block(slice(0))),
-                pw.SizedBox(width: 6),
-                pw.Expanded(child: block(slice(1))),
-                pw.SizedBox(width: 6),
-                pw.Expanded(child: block(slice(2))),
-              ],
-            ),
+          pw.Table(
+            border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey700),
+            columnWidths: widths,
+            children: tableRows,
           ),
         ],
       ),

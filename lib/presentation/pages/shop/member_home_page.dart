@@ -160,27 +160,17 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     final entries = entriesAsync.valueOrNull ?? const <EntryEntity>[];
     final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
 
+    // Flat list in catalog (paper) order — the provider already sorts by
+    // sortOrder, which now matches the paper sheet sequence.
     final items = catalog
         .where((c) => c.active)
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    final byCategory = <String, List<CatalogItemEntity>>{};
-    for (final it in items) {
-      byCategory.putIfAbsent(it.category, () => []).add(it);
-    }
-
     return ListView(
       children: [
-        for (final entry in byCategory.entries) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(entry.key,
-                style: Theme.of(context).textTheme.titleMedium),
-          ),
-          for (final item in entry.value)
-            _row(shop.id, item, qtyByItem[item.id] ?? 0, memberId),
-        ],
+        for (final item in items)
+          _row(shop.id, item, qtyByItem[item.id] ?? 0, memberId),
         const SizedBox(height: 80),
       ],
     );
