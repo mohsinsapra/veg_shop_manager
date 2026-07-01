@@ -12,5 +12,8 @@ class CatalogRepository {
   Future<void> upsert(CatalogItemEntity item) =>
       _refs.catalogItems.doc(item.id).set(item.toMap());
 
+  Future<void> setActive(String id, bool active) =>
+      _refs.catalogItems.doc(id).update({'active': active});
+
   Future<int> count() async => (await _refs.catalogItems.count().get()).count ?? 0;
 }

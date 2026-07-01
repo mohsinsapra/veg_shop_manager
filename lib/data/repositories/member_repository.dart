@@ -17,10 +17,13 @@ class MemberRepository {
   }
 
   Future<void> upsert(MemberEntity member) =>
-      _refs.members.doc(member.id).set(member.toMap());
+      _refs.members.doc(member.id.toLowerCase()).set(member.toMap());
+
+  Future<void> setActive(String id, bool active) =>
+      _refs.members.doc(id.toLowerCase()).update({'active': active});
 
   Future<void> linkUid(String id, String uid) =>
-      _refs.members.doc(id).update({'uid': uid});
+      _refs.members.doc(id.toLowerCase()).update({'uid': uid});
 
   Stream<List<MemberEntity>> watchAll() =>
       _refs.members.orderBy('displayName').snapshots().map((snap) =>
