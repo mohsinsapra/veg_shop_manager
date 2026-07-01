@@ -19,12 +19,12 @@ class AppDateUtils {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  static String formatDisplayDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+  static String formatDisplayDate(DateTime date, [String? localeName]) {
+    return DateFormat('MMM dd, yyyy', localeName).format(date);
   }
 
-  static String formatDateTime(DateTime date) {
-    return DateFormat('MMM dd, yyyy hh:mm a').format(date);
+  static String formatDateTime(DateTime date, [String? localeName]) {
+    return DateFormat('MMM dd, yyyy hh:mm a', localeName).format(date);
   }
 
   static DateTime get today => DateTime.now();

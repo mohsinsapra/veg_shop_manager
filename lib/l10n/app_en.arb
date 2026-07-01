@@ -352,6 +352,9 @@
   "pdfQtyHeader": "Qty",
   "pdfProductHeader": "Product",
   "pdfNothingNeeded": "Nothing needed today.",
+  "pdfCombinedTitle": "Combined Shopping List",
+  "pdfVegetables": "Vegetables",
+  "pdfFruits": "Fruits",
   "printFailed": "Print failed: {error}",
   "@printFailed": {
     "placeholders": {

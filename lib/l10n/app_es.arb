@@ -169,6 +169,9 @@
   "pdfQtyHeader": "Cant.",
   "pdfProductHeader": "Producto",
   "pdfNothingNeeded": "Nada necesario hoy.",
+  "pdfCombinedTitle": "Lista combinada",
+  "pdfVegetables": "Verduras",
+  "pdfFruits": "Frutas",
   "printFailed": "Error al imprimir: {error}",
   "@printFailed": {
     "placeholders": {

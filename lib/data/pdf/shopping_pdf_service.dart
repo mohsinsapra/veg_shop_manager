@@ -95,7 +95,11 @@ class ShoppingPdfService {
     // Header row repeated for each block. The item column is headed like the
     // paper sheet: the first two blocks are vegetables (VERDURAS), the last is
     // fruit (FRUTAS).
-    const blockTitles = ['VERDURAS', 'VERDURAS', 'FRUTAS'];
+    final blockTitles = [
+      l10n.pdfVegetables.toUpperCase(),
+      l10n.pdfVegetables.toUpperCase(),
+      l10n.pdfFruits.toUpperCase(),
+    ];
     final header = <pw.Widget>[];
     for (var b = 0; b < blocks; b++) {
       header.add(cell(blockTitles[b], bold: true));
@@ -168,7 +172,7 @@ class ShoppingPdfService {
         _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {}),
     ];
     return _paperGrid(
-      title: 'GreenChain - Lista combinada',
+      title: 'GreenChain - ${l10n.pdfCombinedTitle}',
       date: date,
       columnHeaders: headers,
       rows: rows,

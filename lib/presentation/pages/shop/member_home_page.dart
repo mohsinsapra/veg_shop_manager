@@ -94,7 +94,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
 
           return Column(
             children: [
-              _dateBanner(),
+              _dateBanner(context),
               _shopSelector(myShops),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -200,10 +200,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     );
   }
 
-  Widget _dateBanner() {
+  Widget _dateBanner(BuildContext context) {
     final cycle = ref.watch(openCycleProvider).valueOrNull;
     final date = cycle?.openedAt.toLocal() ?? DateTime.now();
-    final formattedDate = DateFormat('EEE, d MMM yyyy').format(date);
+    final formattedDate =
+        DateFormat('EEE, d MMM yyyy', context.l10n.localeName).format(date);
     final label = cycle == null
         ? context.l10n.memberNewListLabel(formattedDate)
         : context.l10n.memberListForLabel(formattedDate);

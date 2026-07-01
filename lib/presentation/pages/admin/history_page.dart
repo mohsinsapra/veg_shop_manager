@@ -18,8 +18,6 @@ import '../../widgets/data_error_retry.dart';
 class HistoryPage extends ConsumerWidget {
   const HistoryPage({super.key});
 
-  static final _df = DateFormat('EEE, d MMM yyyy • HH:mm');
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cyclesAsync = ref.watch(completedCyclesProvider);
@@ -53,11 +51,13 @@ class HistoryPage extends ConsumerWidget {
   }
 
   Widget _cycleCard(BuildContext context, WidgetRef ref, CycleEntity c) {
+    final df =
+        DateFormat('EEE, d MMM yyyy • HH:mm', context.l10n.localeName);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ExpansionTile(
         leading: const Icon(Icons.history),
-        title: Text(_df.format((c.completedAt ?? c.openedAt).toLocal())),
+        title: Text(df.format((c.completedAt ?? c.openedAt).toLocal())),
         trailing: _printMenu(context, ref, c.id),
         children: [
           FutureBuilder<List<EntryEntity>>(

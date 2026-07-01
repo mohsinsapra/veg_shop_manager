@@ -36,7 +36,8 @@ class ShopHomePage extends ConsumerWidget {
           children: [
             Text(shopName),
             Text(
-              AppDateUtils.formatDisplayDate(AppDateUtils.today),
+              AppDateUtils.formatDisplayDate(
+                  AppDateUtils.today, context.l10n.localeName),
               style: const TextStyle(fontSize: 14, fontWeight: FontWeight.normal),
             ),
           ],
@@ -51,11 +52,6 @@ class ShopHomePage extends ConsumerWidget {
               }
             },
             tooltip: context.l10n.logoutTooltip,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: context.l10n.settingsTitle,
-            onPressed: () => context.beamToNamed('/settings'),
           ),
         ],
       ),
