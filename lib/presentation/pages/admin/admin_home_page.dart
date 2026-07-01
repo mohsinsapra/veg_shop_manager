@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:beamer/beamer.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/firebase_auth_provider.dart';
 import 'admin_dashboard_page.dart';
@@ -68,11 +67,6 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
             tooltip: context.l10n.logoutTooltip,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: context.l10n.settingsTitle,
-            onPressed: () => context.beamToNamed('/settings'),
-          ),
         ],
       ),
       drawer: Drawer(
@@ -121,6 +115,10 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
           ? null
           : NavigationBar(
               selectedIndex: _index < _bottomCount ? _index : 0,
+              // Tiendas/Historial live only in the drawer, so when one of those
+              // is active hide the pill instead of falsely highlighting "Hoy".
+              indicatorColor:
+                  _index < _bottomCount ? null : Colors.transparent,
               onDestinationSelected: _select,
               destinations: [
                 for (var i = 0; i < _bottomCount; i++)

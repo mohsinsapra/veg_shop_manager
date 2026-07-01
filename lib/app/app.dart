@@ -11,13 +11,16 @@ class VegShopApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final locale = ref.watch(localeProvider);
-
+    // Language switching is disabled: always render in the default locale.
     return MaterialApp.router(
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      locale: locale,
+      // Always use the light (brand) theme; ignore the device's dark mode so the
+      // cream/green look stays consistent everywhere. Flip to ThemeMode.system
+      // to re-enable dark mode.
+      themeMode: ThemeMode.light,
+      locale: defaultAppLocale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerDelegate: AppRouter.routerDelegate,

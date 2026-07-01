@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:beamer/beamer.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
