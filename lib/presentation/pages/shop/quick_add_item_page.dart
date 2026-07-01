@@ -4,6 +4,8 @@ import 'package:beamer/beamer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/l10n/l10n_extension.dart';
+import 'add_item_page.dart' show categoryLabel;
 
 class BasketItem {
   final String name;
@@ -185,7 +187,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'No items found',
+            context.l10n.quickAddNoItemsFound,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.grey[600],
                   fontWeight: FontWeight.bold,
@@ -193,7 +195,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Try searching for "$_searchQuery" with different spelling\nor clear the search to see all items',
+            context.l10n.quickAddNoItemsHint(_searchQuery),
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[500],
@@ -203,7 +205,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
           ElevatedButton.icon(
             onPressed: _clearSearch,
             icon: const Icon(Icons.clear),
-            label: const Text('Clear Search'),
+            label: Text(context.l10n.quickAddClearSearchButton),
           ),
         ],
       ),
@@ -241,7 +243,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added ${_basket.length} items successfully!'),
+            content: Text(context.l10n.quickAddAddedSuccess(_basket.length)),
             backgroundColor: Colors.green,
           ),
         );
@@ -251,7 +253,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error adding items: $e'),
+            content: Text(context.l10n.quickAddErrorAdding(e.toString())),
             backgroundColor: Colors.red,
           ),
         );
@@ -306,7 +308,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quick Add Items'),
+        title: Text(context.l10n.quickAddTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.beamToNamed('/shop'),
@@ -371,7 +373,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Quick Add Missing Items',
+                  context.l10n.quickAddHeading,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).primaryColor,
@@ -379,7 +381,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Search and add items to your basket, then review and confirm',
+                  context.l10n.quickAddSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -396,7 +398,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
               controller: _searchController,
               onChanged: _updateSearchQuery,
               decoration: InputDecoration(
-                hintText: 'Search vegetables...',
+                hintText: context.l10n.quickAddSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -421,7 +423,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Quick search:',
+                    context.l10n.quickAddQuickSearchLabel,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[600],
                           fontWeight: FontWeight.w500,
@@ -437,7 +439,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
-                            label: Text(category, style: const TextStyle(fontSize: 12)),
+                            label: Text(categoryLabel(context, category), style: const TextStyle(fontSize: 12)),
                             selected: isSelected,
                             onSelected: (selected) {
                               setState(() {
@@ -486,7 +488,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Found ${_filteredItems.length} items for "$_searchQuery"',
+                    context.l10n.quickAddFoundItems(_filteredItems.length, _searchQuery),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.w500,
@@ -495,7 +497,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                   const Spacer(),
                   TextButton(
                     onPressed: _clearSearch,
-                    child: const Text('Clear'),
+                    child: Text(context.l10n.clear),
                   ),
                 ],
               ),
@@ -594,12 +596,12 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                                   style: OutlinedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(vertical: 6),
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(Icons.edit, size: 14),
-                                      SizedBox(width: 4),
-                                      Text('Edit', style: TextStyle(fontSize: 11)),
+                                      const Icon(Icons.edit, size: 14),
+                                      const SizedBox(width: 4),
+                                      Text(context.l10n.edit, style: const TextStyle(fontSize: 11)),
                                     ],
                                   ),
                                 ),
@@ -619,7 +621,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                                       const Icon(Icons.check, size: 14, color: Colors.green),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'In Cart ($basketQuantity)',
+                                        context.l10n.quickAddInCart(basketQuantity),
                                         style: const TextStyle(
                                           fontSize: 11,
                                           color: Colors.green,
@@ -640,12 +642,12 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.add_shopping_cart, size: 16),
-                                  SizedBox(width: 4),
-                                  Text('Add to Cart', style: TextStyle(fontSize: 12)),
+                                  const Icon(Icons.add_shopping_cart, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(context.l10n.quickAddAddToCart, style: const TextStyle(fontSize: 12)),
                                 ],
                               ),
                             ),
@@ -664,7 +666,7 @@ class _QuickAddItemPageState extends ConsumerState<QuickAddItemPage> {
           ? FloatingActionButton.extended(
               onPressed: _showBasketReview,
               icon: const Icon(Icons.shopping_cart),
-              label: Text('Review (${_basket.length})'),
+              label: Text(context.l10n.quickAddReviewCount(_basket.length)),
             )
           : null,
     );
@@ -729,14 +731,14 @@ class _BasketReviewSheetState extends State<_BasketReviewSheet> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Review Basket',
+                context.l10n.quickAddReviewBasketTitle,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
               ),
               const Spacer(),
               Text(
-                '$totalItems items',
+                context.l10n.quickAddTotalItems(totalItems),
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Theme.of(context).primaryColor,
                       fontWeight: FontWeight.w600,
@@ -778,7 +780,7 @@ class _BasketReviewSheetState extends State<_BasketReviewSheet> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
-                                'Qty: ${item.quantity}',
+                                context.l10n.quickAddQtyLabel(item.quantity),
                                 style: TextStyle(
                                   color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.w600,
@@ -788,17 +790,17 @@ class _BasketReviewSheetState extends State<_BasketReviewSheet> {
                             IconButton(
                               onPressed: () => widget.onRemoveItem(item.name),
                               icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                              tooltip: 'Remove from basket',
+                              tooltip: context.l10n.quickAddRemoveFromBasket,
                             ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         TextField(
                           controller: controller,
-                          decoration: const InputDecoration(
-                            labelText: 'Notes (optional)',
-                            hintText: 'Size, brand, special requirements...',
-                            border: OutlineInputBorder(),
+                          decoration: InputDecoration(
+                            labelText: context.l10n.quickAddNotesLabel,
+                            hintText: context.l10n.quickAddNotesHint,
+                            border: const OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           ),
                           maxLines: 2,
@@ -819,7 +821,7 @@ class _BasketReviewSheetState extends State<_BasketReviewSheet> {
               Expanded(
                 child: OutlinedButton(
                   onPressed: widget.isSubmitting ? null : widget.onClear,
-                  child: const Text('Clear All'),
+                  child: Text(context.l10n.quickAddClearAllButton),
                 ),
               ),
               const SizedBox(width: 12),
@@ -833,7 +835,7 @@ class _BasketReviewSheetState extends State<_BasketReviewSheet> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Confirm & Add All'),
+                      : Text(context.l10n.quickAddConfirmAllButton),
                 ),
               ),
             ],

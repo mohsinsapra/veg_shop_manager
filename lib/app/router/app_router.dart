@@ -1,13 +1,6 @@
 import 'package:beamer/beamer.dart';
 import 'package:flutter/material.dart';
 import '../../presentation/pages/auth/auth_gate.dart';
-import '../../presentation/pages/shop/shop_home_page.dart';
-import '../../presentation/pages/shop/add_item_page.dart';
-import '../../presentation/pages/shop/quick_add_item_page.dart';
-import '../../presentation/pages/shop/step_by_step_add_page.dart';
-import '../../presentation/pages/admin/admin_page.dart';
-import '../../presentation/pages/admin/debug_admin_page.dart';
-import '../../presentation/pages/admin/shopping_history_page.dart';
 import '../../presentation/pages/settings/settings_page.dart';
 
 class AppRouter {
@@ -18,37 +11,12 @@ class AppRouter {
     setBrowserTabTitle: false,
     locationBuilder: RoutesLocationBuilder(
       routes: {
+        // The signed-in shell (admin dashboard / member entry) is rendered by
+        // AuthGate based on role; the legacy Hive shop/admin pages are not part
+        // of the cloud flow and are intentionally not routed.
         '/': (context, state, data) => const BeamPage(
           key: ValueKey('auth-gate'),
           child: AuthGate(),
-        ),
-        '/shop': (context, state, data) => const BeamPage(
-          key: ValueKey('shop'),
-          child: ShopHomePage(),
-        ),
-        '/shop/add': (context, state, data) => const BeamPage(
-          key: ValueKey('shop-add'),
-          child: AddItemPage(),
-        ),
-        '/shop/quick-add': (context, state, data) => const BeamPage(
-          key: ValueKey('shop-quick-add'),
-          child: QuickAddItemPage(),
-        ),
-        '/shop/step-add': (context, state, data) => const BeamPage(
-          key: ValueKey('shop-step-add'),
-          child: StepByStepAddPage(),
-        ),
-        '/admin': (context, state, data) => const BeamPage(
-          key: ValueKey('admin'),
-          child: AdminPage(),
-        ),
-        '/admin/debug': (context, state, data) => const BeamPage(
-          key: ValueKey('debug-admin'),
-          child: DebugAdminPage(),
-        ),
-        '/admin/history': (context, state, data) => const BeamPage(
-          key: ValueKey('shopping-history'),
-          child: ShoppingHistoryPage(),
         ),
         '/settings': (context, state, data) => const BeamPage(
           key: ValueKey('settings'),

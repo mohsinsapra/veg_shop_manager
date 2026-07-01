@@ -4,6 +4,7 @@ import '../../../domain/entities/member_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 
 class MembersManagementPage extends ConsumerWidget {
   const MembersManagementPage({super.key});
@@ -14,7 +15,7 @@ class MembersManagementPage extends ConsumerWidget {
     return Scaffold(
       body: membersAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
         data: (members) => ListView(
           children: [
             for (final m in members)

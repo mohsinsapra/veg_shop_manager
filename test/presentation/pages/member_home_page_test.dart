@@ -10,6 +10,7 @@ import 'package:veg_shop_manager/data/repositories/shop_repository.dart';
 import 'package:veg_shop_manager/domain/entities/catalog_item_entity.dart';
 import 'package:veg_shop_manager/domain/entities/member_entity.dart';
 import 'package:veg_shop_manager/domain/entities/shop_entity.dart';
+import 'package:veg_shop_manager/l10n/app_localizations.dart';
 import 'package:veg_shop_manager/presentation/pages/shop/member_home_page.dart';
 import 'package:veg_shop_manager/presentation/providers/firebase_providers.dart';
 
@@ -36,7 +37,11 @@ void main() {
         firebaseAuthProvider.overrideWithValue(auth),
         firebaseFirestoreProvider.overrideWithValue(fake),
       ],
-      child: const MaterialApp(home: MemberHomePage()),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const MemberHomePage(),
+      ),
     ));
     await tester.pumpAndSettle();
 

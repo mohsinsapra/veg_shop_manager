@@ -37,7 +37,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GreenChain — My Shop'),
+        title: Text(context.l10n.memberHomeTitle),
         actions: [
           EntryViewMenu(
             mode: ref.watch(entryViewModeProvider),
@@ -45,7 +45,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
           ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.print),
-            tooltip: 'Print',
+            tooltip: context.l10n.memberPrintTooltip,
             onSelected: _print,
             itemBuilder: (context) {
               final multi = (ref.read(authControllerProvider).member?.shopIds
@@ -53,12 +53,12 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
                       0) >
                   1;
               return [
-                const PopupMenuItem(value: 'compact', child: Text('Print my list')),
-                const PopupMenuItem(value: 'sheet', child: Text('Print full sheet')),
+                PopupMenuItem(value: 'compact', child: Text(context.l10n.memberPrintMyList)),
+                PopupMenuItem(value: 'sheet', child: Text(context.l10n.memberPrintFullSheet)),
                 if (multi)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                       value: 'combined',
-                      child: Text('Print combined (all my shops)')),
+                      child: Text(context.l10n.memberPrintCombined)),
               ];
             },
           ),
@@ -69,7 +69,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
+            tooltip: context.l10n.logoutTooltip,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
         ],
@@ -83,11 +83,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               .where((s) => s.active && myShopIds.contains(s.id))
               .toList();
           if (myShops.isEmpty) {
-            return const Center(
+            return Center(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No shop assigned to your account yet.\nAsk your admin to add you to a shop.',
+                  context.l10n.memberNoShopAssigned,
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -104,11 +104,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: TextField(
-                  decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
-                    hintText: 'Search item…',
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search),
+                    hintText: context.l10n.memberSearchItemHint,
                     isDense: true,
-                    border: OutlineInputBorder(),
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
                 ),
@@ -188,9 +188,9 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: DropdownButtonFormField<String>(
         initialValue: _shopId,
-        decoration: const InputDecoration(
-          labelText: 'Shop',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: context.l10n.memberShopLabel,
+          border: const OutlineInputBorder(),
           isDense: true,
         ),
         items: [
@@ -205,9 +205,10 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   Widget _dateBanner() {
     final cycle = ref.watch(openCycleProvider).valueOrNull;
     final date = cycle?.openedAt.toLocal() ?? DateTime.now();
+    final formattedDate = DateFormat('EEE, d MMM yyyy').format(date);
     final label = cycle == null
-        ? 'New list · ${DateFormat('EEE, d MMM yyyy').format(date)}'
-        : 'List for ${DateFormat('EEE, d MMM yyyy').format(date)}';
+        ? context.l10n.memberNewListLabel(formattedDate)
+        : context.l10n.memberListForLabel(formattedDate);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),

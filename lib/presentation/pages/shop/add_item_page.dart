@@ -5,6 +5,33 @@ import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
 import '../../../domain/entities/missing_item_entity.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/l10n/l10n_extension.dart';
+
+/// Translates the fixed category keys from [AppConstants.predefinedItems]
+/// (and the synthetic "All" filter) into localized labels. Individual item
+/// names inside each category are catalog data and stay untranslated.
+String categoryLabel(BuildContext context, String key) {
+  switch (key) {
+    case 'All':
+      return context.l10n.categoryAll;
+    case 'Vegetables':
+      return context.l10n.categoryVegetables;
+    case 'Tomatoes':
+      return context.l10n.categoryTomatoes;
+    case 'Peppers':
+      return context.l10n.categoryPeppers;
+    case 'Stone Fruits':
+      return context.l10n.categoryStoneFruits;
+    case 'Citrus':
+      return context.l10n.categoryCitrus;
+    case 'Other Fruits':
+      return context.l10n.categoryOtherFruits;
+    case 'Accessories':
+      return context.l10n.categoryAccessories;
+    default:
+      return key;
+  }
+}
 
 class AddItemPage extends ConsumerStatefulWidget {
   const AddItemPage({super.key});
@@ -94,14 +121,16 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
     if (state.hasError && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${state.error}'),
+          content: Text(context.l10n.addItemErrorGeneric(state.error.toString())),
           backgroundColor: Colors.red,
         ),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isEditing ? 'Item updated successfully!' : 'Item added successfully!'),
+          content: Text(_isEditing
+              ? context.l10n.addItemUpdatedSuccess
+              : context.l10n.addItemAddedSuccess),
           backgroundColor: Colors.green,
         ),
       );
@@ -125,7 +154,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit Item' : 'Add Missing Item'),
+        title: Text(_isEditing ? context.l10n.addItemEditTitle : context.l10n.addItemAddTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.beamToNamed('/shop'),
@@ -152,7 +181,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            _isEditing ? 'Update Missing Item' : 'Add Missing Item',
+                            _isEditing ? context.l10n.addItemUpdateHeading : context.l10n.addItemAddTitle,
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -160,12 +189,12 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      
+
                       TextFormField(
                         controller: _itemNameController,
                         decoration: InputDecoration(
-                          labelText: 'Item Name *',
-                          hintText: 'Type or select from list below',
+                          labelText: context.l10n.addItemNameLabel,
+                          hintText: context.l10n.addItemNameHint,
                           prefixIcon: const Icon(Icons.shopping_basket),
                           suffixIcon: IconButton(
                             icon: Icon(_showItemList ? Icons.expand_less : Icons.expand_more),
@@ -179,7 +208,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                         textCapitalization: TextCapitalization.words,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter item name';
+                            return context.l10n.addItemNameRequired;
                           }
                           return null;
                         },
@@ -201,10 +230,10 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: TextField(
                                   controller: _searchController,
-                                  decoration: const InputDecoration(
-                                    hintText: 'Search items...',
-                                    prefixIcon: Icon(Icons.search),
-                                    border: OutlineInputBorder(),
+                                  decoration: InputDecoration(
+                                    hintText: context.l10n.addItemSearchHint,
+                                    prefixIcon: const Icon(Icons.search),
+                                    border: const OutlineInputBorder(),
                                     isDense: true,
                                   ),
                                 ),
@@ -222,7 +251,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                                     return Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 4),
                                       child: ChoiceChip(
-                                        label: Text(category, style: TextStyle(fontSize: 12)),
+                                        label: Text(categoryLabel(context, category), style: TextStyle(fontSize: 12)),
                                         selected: isSelected,
                                         onSelected: (selected) {
                                           setState(() {
@@ -269,33 +298,33 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                       
                       TextFormField(
                         controller: _quantityController,
-                        decoration: const InputDecoration(
-                          labelText: 'Quantity *',
-                          hintText: 'e.g., 5, 10',
-                          prefixIcon: Icon(Icons.numbers),
-                          suffixText: 'units/kg',
+                        decoration: InputDecoration(
+                          labelText: context.l10n.addItemQuantityLabel,
+                          hintText: context.l10n.addItemQuantityHint,
+                          prefixIcon: const Icon(Icons.numbers),
+                          suffixText: context.l10n.addItemUnitsSuffix,
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
-                            return 'Please enter quantity';
+                            return context.l10n.addItemQuantityRequired;
                           }
                           final quantity = int.tryParse(value);
                           if (quantity == null || quantity <= 0) {
-                            return 'Please enter a valid positive number';
+                            return context.l10n.addItemQuantityInvalid;
                           }
                           return null;
                         },
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       TextFormField(
                         controller: _notesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes (Optional)',
-                          hintText: 'e.g., Large size, Fresh, Brand preference',
-                          prefixIcon: Icon(Icons.note),
+                        decoration: InputDecoration(
+                          labelText: context.l10n.addItemNotesLabel,
+                          hintText: context.l10n.addItemNotesHint,
+                          prefixIcon: const Icon(Icons.note),
                         ),
                         maxLines: 3,
                         textCapitalization: TextCapitalization.sentences,
@@ -319,7 +348,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Text(
-                        _isEditing ? 'Update Item' : 'Add Item',
+                        _isEditing ? context.l10n.addItemUpdateButton : context.l10n.addItemAddButton,
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
               ),
@@ -342,7 +371,7 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Quick Tips',
+                            context.l10n.addItemQuickTipsHeading,
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -350,12 +379,9 @@ class _AddItemPageState extends ConsumerState<AddItemPage> {
                         ],
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        '• Tap the chip buttons for quick vegetable selection\n'
-                        '• Quantity can be in units, kg, or any measure you prefer\n'
-                        '• Add notes for specific requirements like size or brand\n'
-                        '• You can edit or delete items from the main screen',
-                        style: TextStyle(fontSize: 14),
+                      Text(
+                        context.l10n.addItemQuickTipsBody,
+                        style: const TextStyle(fontSize: 14),
                       ),
                     ],
                   ),

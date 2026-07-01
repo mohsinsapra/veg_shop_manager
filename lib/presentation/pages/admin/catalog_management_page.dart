@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 
 class CatalogManagementPage extends ConsumerWidget {
   const CatalogManagementPage({super.key});
@@ -13,7 +14,7 @@ class CatalogManagementPage extends ConsumerWidget {
     return Scaffold(
       body: catalogAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
         data: (items) {
           return Column(
             children: [

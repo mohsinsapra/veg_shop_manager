@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 
 class ShopsManagementPage extends ConsumerWidget {
   const ShopsManagementPage({super.key});
@@ -13,7 +14,7 @@ class ShopsManagementPage extends ConsumerWidget {
     return Scaffold(
       body: shopsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
         data: (shops) => ListView(
           children: [
             for (final shop in shops)

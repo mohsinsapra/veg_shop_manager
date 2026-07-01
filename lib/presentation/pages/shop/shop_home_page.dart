@@ -55,7 +55,7 @@ class ShopHomePage extends ConsumerWidget {
                 context.beamToNamed('/');
               }
             },
-            tooltip: 'Logout',
+            tooltip: context.l10n.logoutTooltip,
           ),
         ],
       ),
@@ -81,7 +81,7 @@ class ShopHomePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Today\'s Missing Items',
+                  context.l10n.shopMissingItemsHeading,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).primaryColor,
@@ -89,7 +89,7 @@ class ShopHomePage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Track what you need to stock up on',
+                  context.l10n.shopMissingItemsSubtitle,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -108,10 +108,10 @@ class ShopHomePage extends ConsumerWidget {
                   children: [
                     const Icon(Icons.error, size: 48, color: Colors.red),
                     const SizedBox(height: 16),
-                    Text('Error loading items: $error'),
+                    Text(context.l10n.shopErrorLoadingItems(error.toString())),
                     ElevatedButton(
                       onPressed: () => ref.refresh(shopMissingItemsProvider(shopId)),
-                      child: const Text('Retry'),
+                      child: Text(context.l10n.retry),
                     ),
                   ],
                 ),
@@ -135,7 +135,7 @@ class ShopHomePage extends ConsumerWidget {
             child: const Icon(Icons.add),
             backgroundColor: Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
-            label: 'Add Single Item',
+            label: context.l10n.addSingleItemLabel,
             onTap: () {
               if (context.mounted) {
                 context.beamToNamed('/shop/add');
@@ -146,7 +146,7 @@ class ShopHomePage extends ConsumerWidget {
             child: const Icon(Icons.add_shopping_cart),
             backgroundColor: Theme.of(context).primaryColor,
             foregroundColor: Colors.white,
-            label: 'Quick Add Multiple',
+            label: context.l10n.quickAddMultipleLabel,
             onTap: () {
               if (context.mounted) {
                 context.beamToNamed('/shop/quick-add');
@@ -157,7 +157,7 @@ class ShopHomePage extends ConsumerWidget {
             child: const Icon(Icons.navigate_next),
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
-            label: 'Step by Step Add',
+            label: context.l10n.stepByStepAddLabel,
             onTap: () {
               if (context.mounted) {
                 context.beamToNamed('/shop/step-add');
@@ -182,7 +182,7 @@ class ShopHomePage extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'All stocked up!',
+              context.l10n.shopAllStockedUp,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     color: Colors.green[600],
                     fontWeight: FontWeight.bold,
@@ -190,7 +190,7 @@ class ShopHomePage extends ConsumerWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'No missing items for today.\nTap the + button to add items.',
+              context.l10n.shopNoMissingItems,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Colors.grey[600],
@@ -242,12 +242,12 @@ class ShopHomePage extends ConsumerWidget {
             IconButton(
               icon: const Icon(Icons.edit, size: 20),
               onPressed: () => _editItem(context, item),
-              tooltip: 'Edit',
+              tooltip: context.l10n.edit,
             ),
             IconButton(
               icon: const Icon(Icons.delete, size: 20),
               onPressed: () => _deleteItem(context, ref, item),
-              tooltip: 'Delete',
+              tooltip: context.l10n.delete,
             ),
           ],
         ),
@@ -263,19 +263,19 @@ class ShopHomePage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Item'),
-        content: Text('Are you sure you want to delete "${item.itemName}"?'),
+        title: Text(context.l10n.shopDeleteItemTitle),
+        content: Text(context.l10n.shopDeleteItemConfirm(item.itemName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
               Navigator.of(context).pop();
               await ref.read(missingItemNotifierProvider.notifier).deleteItem(item.id);
             },
-            child: const Text('Delete'),
+            child: Text(context.l10n.delete),
           ),
         ],
       ),

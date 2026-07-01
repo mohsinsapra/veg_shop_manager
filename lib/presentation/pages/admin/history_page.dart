@@ -9,6 +9,7 @@ import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 
 /// Completed shopping cycles, most recent first. Each can be printed (combined
 /// grid or per-shop), and all history can be printed as one combined grid.
@@ -23,7 +24,7 @@ class HistoryPage extends ConsumerWidget {
 
     return cyclesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
       data: (cycles) {
         if (cycles.isEmpty) {
           return const Center(child: Text('No completed lists yet.'));

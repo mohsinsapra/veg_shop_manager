@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/app.dart';
 import 'core/firebase/firebase_init.dart';
 import 'core/storage/storage_service.dart';
+import 'presentation/pdf/print_helpers.dart';
 import 'presentation/providers/locale_provider.dart';
 
 void main() async {
@@ -29,4 +30,7 @@ void main() async {
       child: const VegShopApp(),
     ),
   );
+
+  // Warm the PDF fonts so the first print (esp. mobile share) isn't blocked.
+  preloadPdfFonts();
 }

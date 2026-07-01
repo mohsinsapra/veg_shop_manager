@@ -10,5 +10,230 @@
   "languageEnglish": "English",
   "loginGoogleButton": "Sign in with Google",
   "noAccessMessage": "No access for this account.\nPlease ask your admin to add you.",
-  "noAccessSignOutButton": "Sign out"
+  "noAccessSignOutButton": "Sign out",
+  "cancel": "Cancel",
+  "retry": "Retry",
+  "edit": "Edit",
+  "delete": "Delete",
+  "logoutTooltip": "Sign out",
+  "addSingleItemLabel": "Add single item",
+  "quickAddMultipleLabel": "Quick add multiple",
+  "stepByStepAddLabel": "Step-by-step add",
+  "shopMissingItemsHeading": "Missing items",
+  "shopMissingItemsSubtitle": "Items to restock today",
+  "shopAllStockedUp": "All stocked up!",
+  "shopNoMissingItems": "No missing items reported.",
+  "shopDeleteItemTitle": "Delete item",
+  "shopDeleteItemConfirm": "Are you sure you want to delete \"{itemName}\"?",
+  "@shopDeleteItemConfirm": {
+    "placeholders": {
+      "itemName": {
+        "type": "String"
+      }
+    }
+  },
+  "addItemAddTitle": "Add item",
+  "addItemEditTitle": "Edit item",
+  "addItemUpdateHeading": "Update item",
+  "addItemAddButton": "Add",
+  "addItemUpdateButton": "Update",
+  "addItemAddedSuccess": "Item added",
+  "addItemUpdatedSuccess": "Item updated",
+  "addItemErrorGeneric": "Error: {error}",
+  "@addItemErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addItemNameLabel": "Item name",
+  "addItemNameHint": "e.g. Tomate Pera",
+  "addItemNameRequired": "Please enter an item name",
+  "addItemQuantityLabel": "Quantity",
+  "addItemQuantityHint": "e.g. 5",
+  "addItemQuantityRequired": "Please enter a quantity",
+  "addItemQuantityInvalid": "Please enter a valid number",
+  "addItemNotesLabel": "Notes (optional)",
+  "addItemNotesHint": "Any extra details",
+  "addItemUnitsSuffix": "units",
+  "addItemSearchHint": "Search item…",
+  "addItemQuickTipsHeading": "Quick tips",
+  "addItemQuickTipsBody": "Type to search, then pick an item and set the quantity.",
+  "categoryAll": "All",
+  "categoryVegetables": "Vegetables",
+  "categoryTomatoes": "Tomatoes",
+  "categoryPeppers": "Peppers",
+  "categoryStoneFruits": "Stone fruits",
+  "categoryCitrus": "Citrus",
+  "categoryOtherFruits": "Other fruits",
+  "categoryAccessories": "Accessories",
+  "shopErrorLoadingItems": "Error loading items: {error}",
+  "@shopErrorLoadingItems": {
+    "placeholders": {
+      "error": {
+        "type": "Object"
+      }
+    }
+  },
+  "memberHomeTitle": "GreenChain — My Shop",
+  "memberPrintTooltip": "Print",
+  "memberPrintMyList": "Print my list",
+  "memberPrintFullSheet": "Print full sheet",
+  "memberPrintCombined": "Print combined (all my shops)",
+  "memberNoShopAssigned": "No shop assigned to your account yet.\nAsk your admin to add you to a shop.",
+  "memberSearchItemHint": "Search item…",
+  "memberShopLabel": "Shop",
+  "memberNewListLabel": "New list · {date}",
+  "@memberNewListLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "memberListForLabel": "List for {date}",
+  "@memberListForLabel": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "clear": "Clear",
+  "quickAddTitle": "Quick Add Items",
+  "quickAddHeading": "Quick Add Missing Items",
+  "quickAddSubtitle": "Search and add items to your basket, then review and confirm",
+  "quickAddSearchHint": "Search vegetables...",
+  "quickAddQuickSearchLabel": "Quick search:",
+  "quickAddFoundItems": "Found {count} items for \"{query}\"",
+  "@quickAddFoundItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "quickAddNoItemsFound": "No items found",
+  "quickAddNoItemsHint": "Try searching for \"{query}\" with different spelling\nor clear the search to see all items",
+  "@quickAddNoItemsHint": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "quickAddClearSearchButton": "Clear Search",
+  "quickAddInCart": "In Cart ({count})",
+  "@quickAddInCart": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quickAddAddToCart": "Add to Cart",
+  "quickAddReviewCount": "Review ({count})",
+  "@quickAddReviewCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quickAddReviewBasketTitle": "Review Basket",
+  "quickAddTotalItems": "{count, plural, =1{1 item} other{{count} items}}",
+  "@quickAddTotalItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quickAddQtyLabel": "Qty: {qty}",
+  "@quickAddQtyLabel": {
+    "placeholders": {
+      "qty": {
+        "type": "int"
+      }
+    }
+  },
+  "quickAddRemoveFromBasket": "Remove from basket",
+  "quickAddNotesLabel": "Notes (optional)",
+  "quickAddNotesHint": "Size, brand, special requirements...",
+  "quickAddClearAllButton": "Clear All",
+  "quickAddConfirmAllButton": "Confirm & Add All",
+  "quickAddAddedSuccess": "{count, plural, =1{Added 1 item successfully!} other{Added {count} items successfully!}}",
+  "@quickAddAddedSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "quickAddErrorAdding": "Error adding items: {error}",
+  "@quickAddErrorAdding": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "stepAddNoQuantityWarning": "Please add at least one item with quantity",
+  "stepAddAddedSuccess": "{count, plural, =1{Added 1 item successfully!} other{Added {count} items successfully!}}",
+  "@stepAddAddedSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepAddErrorGeneric": "Error: {error}",
+  "@stepAddErrorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "stepAddChooseMethodTitle": "Choose Add Method",
+  "stepAddSwitchMethodTooltip": "Switch Add Method",
+  "stepAddSearchLabel": "Search Items",
+  "stepAddItemProgress": "Item {current} of {total}",
+  "@stepAddItemProgress": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "stepAddAddedCount": "Added: {count}",
+  "@stepAddAddedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepAddQuantityLabel": "Quantity",
+  "stepAddReleaseBack": "Release to go back",
+  "stepAddReleaseForward": "Release to go forward",
+  "stepAddKeepDragging": "Keep dragging...",
+  "stepAddDragHint": "← Drag to navigate →",
+  "stepAddNoItemsFound": "No items found matching your search",
+  "stepAddSubmitting": "Submitting...",
+  "stepAddSubmitCount": "Submit ({count})",
+  "@stepAddSubmitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

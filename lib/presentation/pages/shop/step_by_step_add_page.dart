@@ -5,6 +5,7 @@ import 'package:beamer/beamer.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/l10n/l10n_extension.dart';
 
 class StepByStepAddPage extends ConsumerStatefulWidget {
   const StepByStepAddPage({super.key});
@@ -255,8 +256,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
   Future<void> _submitItems() async {
     if (_quantities.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one item with quantity'),
+        SnackBar(
+          content: Text(context.l10n.stepAddNoQuantityWarning),
         ),
       );
       return;
@@ -289,7 +290,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Added ${_quantities.length} items successfully!'),
+            content: Text(context.l10n.stepAddAddedSuccess(_quantities.length)),
           ),
         );
         context.beamToNamed('/shop');
@@ -298,7 +299,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text(context.l10n.stepAddErrorGeneric(e.toString()))));
       }
     } finally {
       if (mounted) {
@@ -317,14 +318,14 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Choose Add Method',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              context.l10n.stepAddChooseMethodTitle,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.add),
-              title: const Text('Add Single Item'),
+              title: Text(context.l10n.addSingleItemLabel),
               onTap: () {
                 Navigator.pop(context);
                 context.beamToNamed('/shop/add');
@@ -332,7 +333,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
             ),
             ListTile(
               leading: const Icon(Icons.add_shopping_cart),
-              title: const Text('Quick Add Multiple'),
+              title: Text(context.l10n.quickAddMultipleLabel),
               onTap: () {
                 Navigator.pop(context);
                 context.beamToNamed('/shop/quick-add');
@@ -340,7 +341,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
             ),
             ListTile(
               leading: const Icon(Icons.navigate_next),
-              title: const Text('Step by Step Add'),
+              title: Text(context.l10n.stepByStepAddLabel),
               trailing: const Icon(Icons.check, color: Colors.green),
               onTap: () => Navigator.pop(context),
             ),
@@ -365,7 +366,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Step by Step Add'),
+        title: Text(context.l10n.stepByStepAddLabel),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.beamToNamed('/shop'),
@@ -374,7 +375,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
           IconButton(
             icon: const Icon(Icons.swap_horiz),
             onPressed: _showScreenSelector,
-            tooltip: 'Switch Add Method',
+            tooltip: context.l10n.stepAddSwitchMethodTooltip,
           ),
         ],
       ),
@@ -386,7 +387,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search Items',
+                labelText: context.l10n.stepAddSearchLabel,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
@@ -418,7 +419,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Item ${_currentIndex + 1} of ${_filteredItems.length}',
+                          context.l10n.stepAddItemProgress(_currentIndex + 1, _filteredItems.length),
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
                                 color: Colors.grey[600],
@@ -435,7 +436,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            'Added: ${_quantities.length}',
+                            context.l10n.stepAddAddedCount(_quantities.length),
                             style: TextStyle(
                               color: Colors.green[700],
                               fontWeight: FontWeight.w600,
@@ -615,7 +616,7 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                   decoration: InputDecoration(
-                                                    labelText: 'Quantity',
+                                                    labelText: context.l10n.stepAddQuantityLabel,
                                                     labelStyle: TextStyle(
                                                       fontSize: 16,
                                                       color: Colors.grey[600],
@@ -683,7 +684,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                                             width: 8,
                                                           ),
                                                           Text(
-                                                            'Release to go back',
+                                                            context.l10n
+                                                                .stepAddReleaseBack,
                                                             style: TextStyle(
                                                               color: Colors
                                                                   .blue[600],
@@ -695,7 +697,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                                         ] else if (_dragOffset <
                                                             -50) ...[
                                                           Text(
-                                                            'Release to go forward',
+                                                            context.l10n
+                                                                .stepAddReleaseForward,
                                                             style: TextStyle(
                                                               color: Colors
                                                                   .green[600],
@@ -714,7 +717,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                                           ),
                                                         ] else ...[
                                                           Text(
-                                                            'Keep dragging...',
+                                                            context.l10n
+                                                                .stepAddKeepDragging,
                                                             style: TextStyle(
                                                               color: Colors
                                                                   .grey[600],
@@ -727,7 +731,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                                       ],
                                                     )
                                                   : Text(
-                                                      '← Drag to navigate →',
+                                                      context.l10n
+                                                          .stepAddDragHint,
                                                       style: TextStyle(
                                                         color: Colors.grey[500],
                                                         fontSize: 14,
@@ -753,11 +758,11 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
               ),
             ),
           ] else ...[
-            const Expanded(
+            Expanded(
               child: Center(
                 child: Text(
-                  'No items found matching your search',
-                  style: TextStyle(fontSize: 16),
+                  context.l10n.stepAddNoItemsFound,
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
             ),
@@ -785,8 +790,8 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                 ? Colors.green
                 : Colors.grey,
             label: _isSubmitting
-                ? const Text('Submitting...')
-                : Text('Submit (${_quantities.length})'),
+                ? Text(context.l10n.stepAddSubmitting)
+                : Text(context.l10n.stepAddSubmitCount(_quantities.length)),
             icon: _isSubmitting
                 ? const SizedBox(
                     width: 16,

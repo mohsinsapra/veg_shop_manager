@@ -12,6 +12,19 @@ Future<ShoppingPdfService> buildPdfService() async {
   return ShoppingPdfService(base: base, bold: bold);
 }
 
+/// Warms the PDF fonts at startup so the FIRST print isn't blocked by a slow
+/// font fetch. On mobile the OS share sheet must open within the user's tap
+/// gesture; a slow first-time font download breaks that (the tap appears to do
+/// nothing, and only the second tap works). Call once, fire-and-forget.
+Future<void> preloadPdfFonts() async {
+  try {
+    await PdfGoogleFonts.notoSansRegular();
+    await PdfGoogleFonts.notoSansBold();
+  } catch (_) {
+    // Best-effort; buildPdfService will fetch again if needed.
+  }
+}
+
 /// Delivers the PDF appropriately for the platform:
 /// - Mobile (Android/iOS, incl. mobile browsers): the native share sheet, which
 ///   offers Print, Save to Files, and send. `layoutPdf`'s print dialog is
