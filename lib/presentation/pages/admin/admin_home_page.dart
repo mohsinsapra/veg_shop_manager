@@ -22,7 +22,13 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
 
   // Full section list. The first [_bottomCount] appear in the bottom bar; the
   // hamburger drawer (top-left) exposes all of them.
-  static const _titles = ['Today', 'Catalog', 'Members', 'Shops', 'History'];
+  List<String> _titles(BuildContext context) => [
+        context.l10n.adminHomeSectionToday,
+        context.l10n.adminHomeSectionCatalog,
+        context.l10n.adminHomeSectionMembers,
+        context.l10n.adminHomeSectionShops,
+        context.l10n.adminHomeSectionHistory,
+      ];
   static const _icons = [
     Icons.today,
     Icons.eco,
@@ -52,9 +58,10 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width >= 720;
+    final titles = _titles(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('GreenChain — ${_titles[_index]}'),
+        title: Text(context.l10n.adminHomeAppBarTitle(titles[_index])),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -63,7 +70,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
           ),
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Sign out',
+            tooltip: context.l10n.logoutTooltip,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
         ],
@@ -78,10 +85,10 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
               ),
-              for (var i = 0; i < _titles.length; i++)
+              for (var i = 0; i < titles.length; i++)
                 ListTile(
                   leading: Icon(_icons[i]),
-                  title: Text(_titles[i]),
+                  title: Text(titles[i]),
                   selected: _index == i,
                   onTap: () {
                     _select(i);
@@ -100,10 +107,10 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
               onDestinationSelected: _select,
               labelType: NavigationRailLabelType.all,
               destinations: [
-                for (var i = 0; i < _titles.length; i++)
+                for (var i = 0; i < titles.length; i++)
                   NavigationRailDestination(
                     icon: Icon(_icons[i]),
-                    label: Text(_titles[i]),
+                    label: Text(titles[i]),
                   ),
               ],
             ),
@@ -119,14 +126,14 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
                 for (var i = 0; i < _bottomCount; i++)
                   NavigationDestination(
                     icon: Icon(_icons[i]),
-                    label: _titles[i],
+                    label: titles[i],
                   ),
               ],
             ),
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(
               icon: const Icon(Icons.add),
-              label: const Text('Add items'),
+              label: Text(context.l10n.adminHomeAddItemsFab),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const AdminEntryPage()),
               ),

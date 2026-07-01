@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
@@ -59,7 +60,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add items to the list'),
+        title: Text(context.l10n.adminEntryTitle),
         actions: [
           EntryViewMenu(
             mode: ref.watch(entryViewModeProvider),
@@ -73,13 +74,14 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             child: DropdownButtonFormField<String>(
               initialValue: _target,
-              decoration: const InputDecoration(
-                labelText: 'Add for',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: context.l10n.adminEntryAddForLabel,
+                border: const OutlineInputBorder(),
                 isDense: true,
               ),
               items: [
-                const DropdownMenuItem(value: allShops, child: Text('All shops')),
+                DropdownMenuItem(
+                    value: allShops, child: Text(context.l10n.adminEntryAllShops)),
                 for (final s in shops)
                   DropdownMenuItem(value: s.id, child: Text('${s.name} (${s.code})')),
               ],
@@ -92,11 +94,11 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'Search item…',
+              decoration: InputDecoration(
+                prefixIcon: const Icon(Icons.search),
+                hintText: context.l10n.addItemSearchHint,
                 isDense: true,
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
               onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
             ),

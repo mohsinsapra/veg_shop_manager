@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/data_error_retry.dart';
@@ -21,7 +22,7 @@ class ShopsManagementPage extends ConsumerWidget {
               ListTile(
                 leading: CircleAvatar(child: Text(shop.code)),
                 title: Text(shop.name),
-                subtitle: Text('Code: ${shop.code}'),
+                subtitle: Text(context.l10n.adminShopsCodeSubtitle(shop.code)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -54,7 +55,9 @@ class ShopsManagementPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(existing == null ? 'Add Shop' : 'Edit Shop'),
+        title: Text(existing == null
+            ? context.l10n.adminShopsAddTitle
+            : context.l10n.adminShopsEditTitle),
         content: Form(
           key: formKey,
           child: Column(
@@ -62,16 +65,19 @@ class ShopsManagementPage extends ConsumerWidget {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                decoration:
+                    InputDecoration(labelText: context.l10n.adminShopsNameLabel),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.validationEnterName
+                    : null,
               ),
               TextFormField(
                 controller: codeCtrl,
-                decoration: const InputDecoration(
-                    labelText: 'Code (grid column, e.g. D)'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a code' : null,
+                decoration: InputDecoration(
+                    labelText: context.l10n.adminShopsCodeFieldLabel),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.adminShopsCodeRequired
+                    : null,
               ),
             ],
           ),
@@ -79,7 +85,7 @@ class ShopsManagementPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -95,7 +101,7 @@ class ShopsManagementPage extends ConsumerWidget {
               await repo.upsert(shop);
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),

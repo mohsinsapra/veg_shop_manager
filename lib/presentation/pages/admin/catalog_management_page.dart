@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/data_error_retry.dart';
@@ -18,16 +19,16 @@ class CatalogManagementPage extends ConsumerWidget {
         data: (items) {
           return Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    Icon(Icons.drag_indicator, size: 18, color: Colors.grey),
-                    SizedBox(width: 6),
+                    const Icon(Icons.drag_indicator, size: 18, color: Colors.grey),
+                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        'Drag the handle to reorder — this order is used everywhere and on prints.',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                        context.l10n.adminCatalogReorderHint,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ),
                   ],
@@ -103,7 +104,9 @@ class CatalogManagementPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(existing == null ? 'Add Item' : 'Edit Item'),
+        title: Text(existing == null
+            ? context.l10n.adminCatalogAddTitle
+            : context.l10n.adminCatalogEditTitle),
         content: Form(
           key: formKey,
           child: Column(
@@ -111,15 +114,19 @@ class CatalogManagementPage extends ConsumerWidget {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration: const InputDecoration(labelText: 'Name'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                decoration:
+                    InputDecoration(labelText: context.l10n.adminCatalogNameLabel),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.validationEnterName
+                    : null,
               ),
               TextFormField(
                 controller: catCtrl,
-                decoration: const InputDecoration(labelText: 'Category'),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Enter a category' : null,
+                decoration: InputDecoration(
+                    labelText: context.l10n.adminCatalogCategoryLabel),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? context.l10n.adminCatalogCategoryRequired
+                    : null,
               ),
             ],
           ),
@@ -127,7 +134,7 @@ class CatalogManagementPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -143,7 +150,7 @@ class CatalogManagementPage extends ConsumerWidget {
               await repo.upsert(item);
               if (context.mounted) Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: Text(context.l10n.save),
           ),
         ],
       ),

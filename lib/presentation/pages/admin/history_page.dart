@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/cycle_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
@@ -27,7 +28,7 @@ class HistoryPage extends ConsumerWidget {
       error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
       data: (cycles) {
         if (cycles.isEmpty) {
-          return const Center(child: Text('No completed lists yet.'));
+          return Center(child: Text(context.l10n.adminHistoryEmpty));
         }
         return Column(
           children: [
@@ -35,7 +36,7 @@ class HistoryPage extends ConsumerWidget {
               padding: const EdgeInsets.all(8),
               child: OutlinedButton.icon(
                 icon: const Icon(Icons.print),
-                label: const Text('Print all history (combined)'),
+                label: Text(context.l10n.adminHistoryPrintAllCombined),
                 onPressed: () => _printAllCombined(context, ref, cycles),
               ),
             ),
@@ -92,15 +93,17 @@ class HistoryPage extends ConsumerWidget {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return PopupMenuButton<String>(
       icon: const Icon(Icons.print),
-      tooltip: 'Print this list',
+      tooltip: context.l10n.adminHistoryPrintTooltip,
       onSelected: (value) => value == 'combined'
           ? _printCycleCombined(context, ref, cycleId)
           : _printCycleShop(context, ref, cycleId, value),
       itemBuilder: (context) => [
-        const PopupMenuItem(value: 'combined', child: Text('Combined grid (all shops)')),
+        PopupMenuItem(
+            value: 'combined', child: Text(context.l10n.printCombinedAllShops)),
         const PopupMenuDivider(),
         for (final s in shops)
-          PopupMenuItem(value: s.id, child: Text('${s.name} list')),
+          PopupMenuItem(
+              value: s.id, child: Text(context.l10n.printShopListItem(s.name))),
       ],
     );
   }

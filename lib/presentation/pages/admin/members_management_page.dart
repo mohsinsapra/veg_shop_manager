@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../domain/entities/member_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../providers/firebase_auth_provider.dart';
@@ -25,7 +26,7 @@ class MembersManagementPage extends ConsumerWidget {
                 ),
                 title: Text(m.displayName),
                 subtitle: Text('${m.email} • ${m.role.name}'
-                    '${m.shopIds.isEmpty ? '' : ' • ${m.shopIds.length} shop(s)'}'),
+                    '${m.shopIds.isEmpty ? '' : ' ${context.l10n.adminMembersShopsCount(m.shopIds.length)}'}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -63,7 +64,9 @@ class MembersManagementPage extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existing == null ? 'Add Member' : 'Edit Member'),
+          title: Text(existing == null
+              ? context.l10n.adminMembersAddTitle
+              : context.l10n.adminMembersEditTitle),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -73,33 +76,39 @@ class MembersManagementPage extends ConsumerWidget {
                   TextFormField(
                     controller: emailCtrl,
                     enabled: existing == null,
-                    decoration: const InputDecoration(labelText: 'Google email'),
+                    decoration: InputDecoration(
+                        labelText: context.l10n.adminMembersEmailLabel),
                     validator: (v) => (v == null || !v.contains('@'))
-                        ? 'Enter a valid email'
+                        ? context.l10n.adminMembersEmailInvalid
                         : null,
                   ),
                   TextFormField(
                     controller: nameCtrl,
-                    decoration: const InputDecoration(labelText: 'Display name'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                    decoration: InputDecoration(
+                        labelText: context.l10n.adminMembersNameLabel),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? context.l10n.validationEnterName
+                        : null,
                   ),
                   DropdownButtonFormField<MemberRole>(
                     initialValue: role,
-                    decoration: const InputDecoration(labelText: 'Role'),
-                    items: const [
+                    decoration: InputDecoration(
+                        labelText: context.l10n.adminMembersRoleLabel),
+                    items: [
                       DropdownMenuItem(
-                          value: MemberRole.member, child: Text('member')),
+                          value: MemberRole.member,
+                          child: Text(context.l10n.adminMembersRoleMember)),
                       DropdownMenuItem(
-                          value: MemberRole.admin, child: Text('admin')),
+                          value: MemberRole.admin,
+                          child: Text(context.l10n.adminMembersRoleAdmin)),
                     ],
                     onChanged: (v) =>
                         setState(() => role = v ?? MemberRole.member),
                   ),
                   const SizedBox(height: 8),
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Shops'),
+                    child: Text(context.l10n.adminMembersShopsHeading),
                   ),
                   for (final s in shops)
                     CheckboxListTile(
@@ -121,7 +130,7 @@ class MembersManagementPage extends ConsumerWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(context.l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
@@ -139,7 +148,7 @@ class MembersManagementPage extends ConsumerWidget {
                 await ref.read(memberRepositoryProvider).upsert(member);
                 if (context.mounted) Navigator.pop(context);
               },
-              child: const Text('Save'),
+              child: Text(context.l10n.save),
             ),
           ],
         ),

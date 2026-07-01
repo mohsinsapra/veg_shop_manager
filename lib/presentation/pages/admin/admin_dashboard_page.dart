@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
@@ -29,12 +30,12 @@ class AdminDashboardPage extends ConsumerWidget {
           return RefreshIndicator(
             onRefresh: () => refreshAppData(ref),
             child: ListView(
-              children: const [
-                SizedBox(height: 160),
+              children: [
+                const SizedBox(height: 160),
                 Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Text(
-                    'No items requested yet today.\nTap “Add items” to start the list.',
+                    context.l10n.adminDashboardEmptyTitle,
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -71,7 +72,8 @@ class AdminDashboardPage extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Today · ${itemNames.length} items · $boughtUnits/$totalUnits units bought',
+                      context.l10n.adminDashboardHeaderSummary(
+                          itemNames.length, boughtUnits, totalUnits),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -88,7 +90,9 @@ class AdminDashboardPage extends ConsumerWidget {
                       icon: Icon(allBought
                           ? Icons.remove_done
                           : Icons.done_all),
-                      label: Text(allBought ? 'Unmark all' : 'Mark all bought'),
+                      label: Text(allBought
+                          ? context.l10n.adminDashboardUnmarkAll
+                          : context.l10n.adminDashboardMarkAllBought),
                       onPressed: () => ref
                           .read(entryActionsProvider)
                           .setBoughtBatch(entries.map((e) => e.id), !allBought),
@@ -98,7 +102,7 @@ class AdminDashboardPage extends ConsumerWidget {
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.check_circle),
-                      label: const Text('Complete'),
+                      label: Text(context.l10n.adminDashboardComplete),
                       style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white),
@@ -136,7 +140,7 @@ class AdminDashboardPage extends ConsumerWidget {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return PopupMenuButton<String>(
       icon: const Icon(Icons.print),
-      tooltip: 'Print',
+      tooltip: context.l10n.memberPrintTooltip,
       onSelected: (value) async {
         if (value == 'combined') {
           await _printCombined(context, ref, entries, shops);
@@ -145,10 +149,12 @@ class AdminDashboardPage extends ConsumerWidget {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(value: 'combined', child: Text('Combined grid (all shops)')),
+        PopupMenuItem(
+            value: 'combined', child: Text(context.l10n.printCombinedAllShops)),
         const PopupMenuDivider(),
         for (final s in shops)
-          PopupMenuItem(value: s.id, child: Text('${s.name} list')),
+          PopupMenuItem(
+              value: s.id, child: Text(context.l10n.printShopListItem(s.name))),
       ],
     );
   }
@@ -201,24 +207,24 @@ class AdminDashboardPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Complete shopping list'),
-        content: const Text(
-            'Move today\'s list to history and start a fresh one?'),
+        title: Text(context.l10n.adminDashboardCompleteDialogTitle),
+        content: Text(context.l10n.adminDashboardCompleteDialogContent),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               await ref.read(entryActionsProvider).completeCurrentCycle();
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text('Shopping list completed and archived.')));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content:
+                        Text(context.l10n.adminDashboardCompletedSnackbar)));
               }
             },
-            child: const Text('Complete'),
+            child: Text(context.l10n.adminDashboardComplete),
           ),
         ],
       ),
@@ -258,7 +264,9 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
                   .read(entryActionsProvider)
                   .setBoughtBatch(rows.map((e) => e.id), !allBought),
               child: Tooltip(
-                message: allBought ? 'Mark not bought' : 'Mark all bought',
+                message: allBought
+                    ? context.l10n.adminDashboardMarkNotBought
+                    : context.l10n.adminDashboardMarkAllBought,
                 child: CircleAvatar(
                   backgroundColor:
                       allBought ? Colors.green : Colors.grey.shade200,
@@ -272,7 +280,8 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
                 style: TextStyle(
                     decoration:
                         allBought ? TextDecoration.lineThrough : null)),
-            subtitle: Text('${rows.length} shop(s) need this'),
+            subtitle:
+                Text(context.l10n.adminDashboardShopsNeedThis(rows.length)),
             trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
             onTap: () => setState(() => _expanded = !_expanded),
           ),
@@ -290,7 +299,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
                     '${widget.shopName[e.shopId] ?? e.shopId}: ${e.quantity}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
-                  tooltip: 'Remove from list',
+                  tooltip: context.l10n.adminDashboardRemoveFromList,
                   onPressed: () =>
                       ref.read(entryRepositoryProvider).delete(e.id),
                 ),

@@ -235,5 +235,103 @@
         "type": "int"
       }
     }
-  }
+  },
+  "save": "Save",
+  "validationEnterName": "Enter a name",
+  "printCombinedAllShops": "Combined grid (all shops)",
+  "printShopListItem": "{shopName} list",
+  "@printShopListItem": {
+    "placeholders": {
+      "shopName": {
+        "type": "String"
+      }
+    }
+  },
+  "adminHomeSectionToday": "Today",
+  "adminHomeSectionCatalog": "Catalog",
+  "adminHomeSectionMembers": "Members",
+  "adminHomeSectionShops": "Shops",
+  "adminHomeSectionHistory": "History",
+  "adminHomeAppBarTitle": "GreenChain — {section}",
+  "@adminHomeAppBarTitle": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "adminHomeAddItemsFab": "Add items",
+  "adminDashboardEmptyTitle": "No items requested yet today.\nTap “Add items” to start the list.",
+  "adminDashboardHeaderSummary": "Today · {itemCount} items · {bought}/{total} units bought",
+  "@adminDashboardHeaderSummary": {
+    "placeholders": {
+      "itemCount": {
+        "type": "int"
+      },
+      "bought": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "adminDashboardMarkAllBought": "Mark all bought",
+  "adminDashboardUnmarkAll": "Unmark all",
+  "adminDashboardComplete": "Complete",
+  "adminDashboardCompleteDialogTitle": "Complete shopping list",
+  "adminDashboardCompleteDialogContent": "Move today's list to history and start a fresh one?",
+  "adminDashboardCompletedSnackbar": "Shopping list completed and archived.",
+  "adminDashboardMarkNotBought": "Mark not bought",
+  "adminDashboardShopsNeedThis": "{count, plural, =1{1 shop needs this} other{{count} shops need this}}",
+  "@adminDashboardShopsNeedThis": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminDashboardRemoveFromList": "Remove from list",
+  "adminCatalogReorderHint": "Drag the handle to reorder — this order is used everywhere and on prints.",
+  "adminCatalogAddTitle": "Add Item",
+  "adminCatalogEditTitle": "Edit Item",
+  "adminCatalogNameLabel": "Name",
+  "adminCatalogCategoryLabel": "Category",
+  "adminCatalogCategoryRequired": "Enter a category",
+  "adminMembersShopsCount": "{count, plural, =1{• 1 shop} other{• {count} shops}}",
+  "@adminMembersShopsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "adminMembersAddTitle": "Add Member",
+  "adminMembersEditTitle": "Edit Member",
+  "adminMembersEmailLabel": "Google email",
+  "adminMembersEmailInvalid": "Enter a valid email",
+  "adminMembersNameLabel": "Display name",
+  "adminMembersRoleLabel": "Role",
+  "adminMembersRoleMember": "Member",
+  "adminMembersRoleAdmin": "Admin",
+  "adminMembersShopsHeading": "Shops",
+  "adminShopsCodeSubtitle": "Code: {code}",
+  "@adminShopsCodeSubtitle": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "adminShopsAddTitle": "Add Shop",
+  "adminShopsEditTitle": "Edit Shop",
+  "adminShopsNameLabel": "Name",
+  "adminShopsCodeFieldLabel": "Code (grid column, e.g. D)",
+  "adminShopsCodeRequired": "Enter a code",
+  "adminHistoryEmpty": "No completed lists yet.",
+  "adminHistoryPrintAllCombined": "Print all history (combined)",
+  "adminHistoryPrintTooltip": "Print this list",
+  "adminEntryTitle": "Add items to the list",
+  "adminEntryAllShops": "All shops",
+  "adminEntryAddForLabel": "Add for"
 }
