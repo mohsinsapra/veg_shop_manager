@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/firebase_auth_provider.dart';
+import '../admin/admin_home_page.dart';
 import '../home/home_landing_page.dart';
 import 'login_page.dart';
 import 'no_access_page.dart';
@@ -23,7 +24,9 @@ class AuthGate extends ConsumerWidget {
       case AuthStatus.noAccess:
         return const NoAccessPage();
       case AuthStatus.signedIn:
-        return const HomeLandingPage();
+        return session.isAdmin
+            ? const AdminHomePage()
+            : const HomeLandingPage();
     }
   }
 }
