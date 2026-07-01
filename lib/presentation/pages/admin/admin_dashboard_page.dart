@@ -97,61 +97,17 @@ class AdminDashboardPage extends ConsumerWidget {
               child: ListView(
                 children: [
                   for (final name in itemNames)
-                    _itemTile(context, ref, name, byItem[name]!, shopName),
+                    _ItemTile(
+                      name: name,
+                      rows: byItem[name]!,
+                      shopName: shopName,
+                    ),
                 ],
               ),
             ),
           ],
         );
       },
-    );
-  }
-
-  Widget _itemTile(BuildContext context, WidgetRef ref, String name,
-      List<EntryEntity> rows, Map<String, String> shopName) {
-    final total = rows.fold<int>(0, (s, e) => s + e.quantity);
-    final allBought = rows.every((e) => e.bought);
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ExpansionTile(
-        leading: InkWell(
-          customBorder: const CircleBorder(),
-          onTap: () => ref
-              .read(entryActionsProvider)
-              .setBoughtBatch(rows.map((e) => e.id), !allBought),
-          child: Tooltip(
-            message: allBought ? 'Mark not bought' : 'Mark all bought',
-            child: CircleAvatar(
-              backgroundColor: allBought ? Colors.green : Colors.grey.shade200,
-              child: allBought
-                  ? const Icon(Icons.check, color: Colors.white, size: 20)
-                  : Text('$total'),
-            ),
-          ),
-        ),
-        title: Text(name,
-            style: TextStyle(
-                decoration: allBought ? TextDecoration.lineThrough : null)),
-        subtitle: Text('${rows.length} shop(s) need this'),
-        children: [
-          for (final e in rows)
-            ListTile(
-              dense: true,
-              leading: Checkbox(
-                value: e.bought,
-                onChanged: (v) =>
-                    ref.read(entryActionsProvider).setBought(e.id, v ?? false),
-              ),
-              title: Text('${shopName[e.shopId] ?? e.shopId}: ${e.quantity}'),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete_outline),
-                tooltip: 'Remove from list',
-                onPressed: () =>
-                    ref.read(entryRepositoryProvider).delete(e.id),
-              ),
-            ),
-        ],
-      ),
     );
   }
 
@@ -253,6 +209,81 @@ class AdminDashboardPage extends ConsumerWidget {
             },
             child: const Text('Complete'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One item row: a tappable icon marks the whole item (all shops) bought;
+/// tapping the body expands the per-shop breakdown with remove buttons.
+class _ItemTile extends ConsumerStatefulWidget {
+  final String name;
+  final List<EntryEntity> rows;
+  final Map<String, String> shopName;
+  const _ItemTile(
+      {required this.name, required this.rows, required this.shopName});
+
+  @override
+  ConsumerState<_ItemTile> createState() => _ItemTileState();
+}
+
+class _ItemTileState extends ConsumerState<_ItemTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = widget.rows;
+    final total = rows.fold<int>(0, (s, e) => s + e.quantity);
+    final allBought = rows.every((e) => e.bought);
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Column(
+        children: [
+          ListTile(
+            leading: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: () => ref
+                  .read(entryActionsProvider)
+                  .setBoughtBatch(rows.map((e) => e.id), !allBought),
+              child: Tooltip(
+                message: allBought ? 'Mark not bought' : 'Mark all bought',
+                child: CircleAvatar(
+                  backgroundColor:
+                      allBought ? Colors.green : Colors.grey.shade200,
+                  child: allBought
+                      ? const Icon(Icons.check, color: Colors.white, size: 20)
+                      : Text('$total'),
+                ),
+              ),
+            ),
+            title: Text(widget.name,
+                style: TextStyle(
+                    decoration:
+                        allBought ? TextDecoration.lineThrough : null)),
+            subtitle: Text('${rows.length} shop(s) need this'),
+            trailing: Icon(_expanded ? Icons.expand_less : Icons.expand_more),
+            onTap: () => setState(() => _expanded = !_expanded),
+          ),
+          if (_expanded)
+            for (final e in rows)
+              ListTile(
+                dense: true,
+                leading: Checkbox(
+                  value: e.bought,
+                  onChanged: (v) => ref
+                      .read(entryActionsProvider)
+                      .setBought(e.id, v ?? false),
+                ),
+                title: Text(
+                    '${widget.shopName[e.shopId] ?? e.shopId}: ${e.quantity}'),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: 'Remove from list',
+                  onPressed: () =>
+                      ref.read(entryRepositoryProvider).delete(e.id),
+                ),
+              ),
         ],
       ),
     );
