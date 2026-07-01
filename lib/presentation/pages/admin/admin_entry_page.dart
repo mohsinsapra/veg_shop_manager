@@ -34,12 +34,24 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final catalogAsync = ref.watch(catalogProvider);
 
-    // Live quantities for a specific selected shop (not used in ALL mode).
-    final liveEntries = _target == allShops
-        ? const <EntryEntity>[]
-        : (ref.watch(shopEntriesProvider(_target)).valueOrNull ??
-            const <EntryEntity>[]);
-    final liveQty = {for (final e in liveEntries) e.itemId: e.quantity};
+    // Current quantities to prefill the grid so the admin can see what is
+    // already in the list and reduce it to 0 to remove it.
+    final Map<String, int> liveQty;
+    if (_target == allShops) {
+      // Across all shops, show the highest quantity any shop currently needs.
+      final all = ref.watch(openCycleEntriesProvider).valueOrNull ??
+          const <EntryEntity>[];
+      final m = <String, int>{};
+      for (final e in all) {
+        final cur = m[e.itemId] ?? 0;
+        if (e.quantity > cur) m[e.itemId] = e.quantity;
+      }
+      liveQty = m;
+    } else {
+      final liveEntries = ref.watch(shopEntriesProvider(_target)).valueOrNull ??
+          const <EntryEntity>[];
+      liveQty = {for (final e in liveEntries) e.itemId: e.quantity};
+    }
 
     return Scaffold(
       appBar: AppBar(title: const Text('Add items to the list')),

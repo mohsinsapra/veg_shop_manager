@@ -109,20 +109,28 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         orElse: () => shops.isEmpty
             ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
             : shops.first);
-    final catalog = (ref.read(catalogProvider).valueOrNull ?? const <CatalogItemEntity>[])
-        .where((c) => c.active)
-        .toList();
-    final entries = ref.read(shopEntriesProvider(shopId)).valueOrNull ?? const <EntryEntity>[];
+    final catalog = await ref.read(catalogProvider.future);
+    final entries = await ref.read(shopEntriesProvider(shopId).future);
     final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
-    final lines = [
-      for (final c in catalog) PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
-    ];
     if (!mounted) return;
     await runPrint(
       context,
       (svc) => fullSheet
-          ? svc.shopGrid(shopName: shop.name, date: DateTime.now(), lines: lines)
-          : svc.shopCompact(shopName: shop.name, date: DateTime.now(), lines: lines),
+          ? svc.shopSheet(
+              shopName: shop.name,
+              shopCode: shop.code,
+              date: DateTime.now(),
+              catalog: catalog,
+              qtyByItem: qtyByItem,
+            )
+          : svc.shopCompact(
+              shopName: shop.name,
+              date: DateTime.now(),
+              lines: [
+                for (final c in catalog.where((c) => c.active))
+                  PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
+              ],
+            ),
       name: 'greenchain-${shop.code}.pdf',
     );
   }

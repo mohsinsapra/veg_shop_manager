@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../data/pdf/shopping_pdf_service.dart';
-import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
@@ -66,18 +64,35 @@ class AdminDashboardPage extends ConsumerWidget {
                 ],
               ),
             ),
-            if (allBought)
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check_circle),
-                  label: const Text('Complete shopping list'),
-                  style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white),
-                  onPressed: () => _confirmComplete(context, ref),
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: Icon(allBought
+                          ? Icons.remove_done
+                          : Icons.done_all),
+                      label: Text(allBought ? 'Unmark all' : 'Mark all bought'),
+                      onPressed: () => ref
+                          .read(entryActionsProvider)
+                          .setBoughtBatch(entries.map((e) => e.id), !allBought),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text('Complete'),
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white),
+                      onPressed: () => _confirmComplete(context, ref),
+                    ),
+                  ),
+                ],
               ),
+            ),
             Expanded(
               child: ListView(
                 children: [
@@ -99,9 +114,20 @@ class AdminDashboardPage extends ConsumerWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: ExpansionTile(
-        leading: CircleAvatar(
-          backgroundColor: allBought ? Colors.green.shade100 : null,
-          child: Text('$total'),
+        leading: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => ref
+              .read(entryActionsProvider)
+              .setBoughtBatch(rows.map((e) => e.id), !allBought),
+          child: Tooltip(
+            message: allBought ? 'Mark not bought' : 'Mark all bought',
+            child: CircleAvatar(
+              backgroundColor: allBought ? Colors.green : Colors.grey.shade200,
+              child: allBought
+                  ? const Icon(Icons.check, color: Colors.white, size: 20)
+                  : Text('$total'),
+            ),
+          ),
         ),
         title: Text(name,
             style: TextStyle(
@@ -109,12 +135,20 @@ class AdminDashboardPage extends ConsumerWidget {
         subtitle: Text('${rows.length} shop(s) need this'),
         children: [
           for (final e in rows)
-            CheckboxListTile(
+            ListTile(
               dense: true,
-              value: e.bought,
-              onChanged: (v) =>
-                  ref.read(entryActionsProvider).setBought(e.id, v ?? false),
+              leading: Checkbox(
+                value: e.bought,
+                onChanged: (v) =>
+                    ref.read(entryActionsProvider).setBought(e.id, v ?? false),
+              ),
               title: Text('${shopName[e.shopId] ?? e.shopId}: ${e.quantity}'),
+              trailing: IconButton(
+                icon: const Icon(Icons.delete_outline),
+                tooltip: 'Remove from list',
+                onPressed: () =>
+                    ref.read(entryRepositoryProvider).delete(e.id),
+              ),
             ),
         ],
       ),
@@ -147,17 +181,23 @@ class AdminDashboardPage extends ConsumerWidget {
 
   Future<void> _printCombined(BuildContext context, WidgetRef ref,
       List<EntryEntity> entries, List<ShopEntity> shops) async {
-    final catalog =
-        ref.read(catalogProvider).valueOrNull ?? const <CatalogItemEntity>[];
+    // Await the data so the PDF is never built from a not-yet-loaded (empty)
+    // Firestore snapshot on the first print.
+    final catalog = await ref.read(catalogProvider.future);
+    final loadedShops = (await ref.read(shopsProvider.future))
+        .where((s) => s.active)
+        .toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final qty = <String, Map<String, int>>{};
     for (final e in entries) {
       qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
     }
+    if (!context.mounted) return;
     await runPrint(
       context,
       (svc) => svc.adminFullGrid(
         date: DateTime.now(),
-        shops: shops,
+        shops: loadedShops,
         catalog: catalog,
         qtyByItemShop: qty,
       ),
@@ -167,21 +207,24 @@ class AdminDashboardPage extends ConsumerWidget {
 
   Future<void> _printShop(BuildContext context, WidgetRef ref,
       List<EntryEntity> entries, String shopId) async {
-    final shops = ref.read(shopsProvider).valueOrNull ?? const <ShopEntity>[];
+    final shops = await ref.read(shopsProvider.future);
+    final catalog = await ref.read(catalogProvider.future);
     final shop = shops.firstWhere((s) => s.id == shopId,
         orElse: () => shops.isEmpty
             ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
             : shops.first);
-    final lines = [
-      for (final e in entries.where((e) => e.shopId == shopId))
-        PdfLine('', e.itemName, e.quantity),
-    ]..sort((a, b) => a.itemName.compareTo(b.itemName));
+    final qtyByItem = {
+      for (final e in entries.where((e) => e.shopId == shopId)) e.itemId: e.quantity,
+    };
+    if (!context.mounted) return;
     await runPrint(
       context,
-      (svc) => svc.shopCompact(
+      (svc) => svc.shopSheet(
         shopName: shop.name,
+        shopCode: shop.code,
         date: DateTime.now(),
-        lines: lines,
+        catalog: catalog,
+        qtyByItem: qtyByItem,
       ),
       name: 'greenchain-${shop.code}.pdf',
     );

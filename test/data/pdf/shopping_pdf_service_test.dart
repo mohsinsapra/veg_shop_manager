@@ -26,11 +26,16 @@ void main() {
     expect(isPdf(bytes), isTrue);
   });
 
-  test('shopGrid produces a valid PDF', () async {
-    final bytes = await svc.shopGrid(
+  test('shopSheet produces a valid paper-format PDF', () async {
+    final bytes = await svc.shopSheet(
       shopName: 'Downtown',
+      shopCode: 'D',
       date: date,
-      lines: const [PdfLine('Vegetables', 'Apio', 5)],
+      catalog: const [
+        CatalogItemEntity(id: 'i1', name: 'Apio', category: 'Vegetables', sortOrder: 0, active: true),
+        CatalogItemEntity(id: 'i2', name: 'Brócoli', category: 'Vegetables', sortOrder: 1, active: true),
+      ],
+      qtyByItem: const {'i1': 5},
     );
     expect(isPdf(bytes), isTrue);
   });

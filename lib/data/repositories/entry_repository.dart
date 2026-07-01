@@ -66,5 +66,15 @@ class EntryRepository {
   Future<void> setBought(String entryId, bool bought) =>
       _refs.entries.doc(entryId).update({'bought': bought});
 
+  /// Marks many entries bought/unbought in one atomic batch (e.g. a whole item
+  /// across shops, or the entire list at once).
+  Future<void> setBoughtBatch(Iterable<String> entryIds, bool bought) async {
+    final batch = _refs.db.batch();
+    for (final id in entryIds) {
+      batch.update(_refs.entries.doc(id), {'bought': bought});
+    }
+    await batch.commit();
+  }
+
   Future<void> delete(String entryId) => _refs.entries.doc(entryId).delete();
 }

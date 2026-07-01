@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
@@ -13,13 +14,20 @@ class PdfLine {
   const PdfLine(this.category, this.itemName, this.quantity);
 }
 
-/// Builds A4 PDFs that mirror the paper stock sheet. Pure functions returning
-/// bytes so they are easy to unit-test and hand to the `printing` package.
+/// A single grid row: item name plus one text cell per value column.
+class _PaperRow {
+  final String name;
+  final List<String> cells;
+  const _PaperRow(this.name, this.cells);
+}
+
+/// Builds A4 PDFs that mirror the paper stock sheet: the full item list laid
+/// out in three side-by-side blocks on ONE page, with a shop column per shop
+/// (by code) and a Total column. Per-shop prints use the same layout with a
+/// single quantity column.
 ///
-/// Item names contain Spanish accents (Brócoli, Champiñones…). The default PDF
-/// font (Helvetica) cannot render those, so callers should pass a Unicode
-/// [base]/[bold] font (e.g. from `PdfGoogleFonts`); when omitted the document
-/// falls back to Helvetica (fine for ASCII-only content in tests).
+/// Item names contain Spanish accents; pass a Unicode [base]/[bold] font
+/// (e.g. from `PdfGoogleFonts`) or the document falls back to Helvetica.
 class ShoppingPdfService {
   final pw.Font? base;
   final pw.Font? bold;
@@ -34,82 +42,85 @@ class ShoppingPdfService {
     );
   }
 
-  pw.Widget _header(String title, String subtitle) => pw.Column(
+  List<CatalogItemEntity> _ordered(List<CatalogItemEntity> catalog) =>
+      catalog.where((c) => c.active).toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+  /// Core single-page, three-column grid used by every full-sheet template.
+  Future<Uint8List> _paperGrid({
+    required String title,
+    required DateTime date,
+    required List<String> columnHeaders,
+    required List<_PaperRow> rows,
+  }) {
+    final perCol = math.max(1, (rows.length / 3).ceil());
+    List<_PaperRow> slice(int i) {
+      final start = i * perCol;
+      if (start >= rows.length) return const [];
+      return rows.sublist(start, math.min(start + perCol, rows.length));
+    }
+
+    pw.Widget cell(String text, {bool bold = false}) => pw.Padding(
+          padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1),
+          child: pw.Text(
+            text,
+            style: pw.TextStyle(
+                fontSize: 6.5,
+                fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal),
+          ),
+        );
+
+    pw.TableRow row(String name, List<String> cells, {bool bold = false}) =>
+        pw.TableRow(children: [
+          cell(name, bold: bold),
+          for (final c in cells) cell(c, bold: bold),
+        ]);
+
+    pw.Widget block(List<_PaperRow> colRows) {
+      return pw.Table(
+        border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey600),
+        columnWidths: {
+          0: const pw.FlexColumnWidth(3),
+          for (var i = 1; i <= columnHeaders.length; i++)
+            i: const pw.FixedColumnWidth(13),
+        },
+        children: [
+          row('Item', columnHeaders, bold: true),
+          for (final r in colRows) row(r.name, r.cells),
+        ],
+      );
+    }
+
+    final doc = _doc();
+    doc.addPage(pw.Page(
+      pageFormat: PdfPageFormat.a4,
+      margin: const pw.EdgeInsets.all(14),
+      build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(title,
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
-          pw.Text(subtitle, style: const pw.TextStyle(fontSize: 11)),
-          pw.SizedBox(height: 8),
-          pw.Divider(),
-        ],
-      );
-
-  /// Template 1 — a shop's compact list of only the items it needs.
-  Future<Uint8List> shopCompact({
-    required String shopName,
-    required DateTime date,
-    required List<PdfLine> lines,
-  }) async {
-    final needed = lines.where((l) => l.quantity > 0).toList();
-    final doc = _doc();
-    doc.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      build: (context) => [
-        _header('GreenChain - $shopName', _df.format(date)),
-        pw.Table(
-          border: pw.TableBorder.all(width: 0.5),
-          columnWidths: {0: const pw.FixedColumnWidth(40)},
-          children: [
-            _tableRow(['Qty', 'Item'], bold: true),
-            for (final l in needed) _tableRow(['${l.quantity}', l.itemName]),
-          ],
-        ),
-        if (needed.isEmpty)
-          pw.Padding(
-            padding: const pw.EdgeInsets.all(8),
-            child: pw.Text('Nothing needed today.'),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+          pw.Text(_df.format(date), style: const pw.TextStyle(fontSize: 8)),
+          pw.SizedBox(height: 4),
+          pw.Expanded(
+            child: pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(child: block(slice(0))),
+                pw.SizedBox(width: 6),
+                pw.Expanded(child: block(slice(1))),
+                pw.SizedBox(width: 6),
+                pw.Expanded(child: block(slice(2))),
+              ],
+            ),
           ),
-      ],
+        ],
+      ),
     ));
     return doc.save();
   }
 
-  /// Template 2 — a shop's full catalog grid (single quantity column).
-  Future<Uint8List> shopGrid({
-    required String shopName,
-    required DateTime date,
-    required List<PdfLine> lines,
-  }) async {
-    final byCategory = <String, List<PdfLine>>{};
-    for (final l in lines) {
-      byCategory.putIfAbsent(l.category, () => []).add(l);
-    }
-    final doc = _doc();
-    doc.addPage(pw.MultiPage(
-      pageFormat: PdfPageFormat.a4,
-      build: (context) => [
-        _header('GreenChain - $shopName (full sheet)', _df.format(date)),
-        for (final entry in byCategory.entries) ...[
-          pw.SizedBox(height: 6),
-          pw.Text(entry.key,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-          pw.Table(
-            border: pw.TableBorder.all(width: 0.5),
-            columnWidths: {1: const pw.FixedColumnWidth(40)},
-            children: [
-              for (final l in entry.value)
-                _tableRow([l.itemName, l.quantity > 0 ? '${l.quantity}' : '']),
-            ],
-          ),
-        ],
-      ],
-    ));
-    return doc.save();
-  }
-
-  /// Template 3 — the admin combined grid: item rows by category, one column
-  /// per shop (by code) plus a Total column. Mirrors the paper form.
+  /// Admin combined grid — one column per active shop (by code) + Total.
   Future<Uint8List> adminFullGrid({
     required DateTime date,
     required List<ShopEntity> shops,
@@ -118,62 +129,100 @@ class ShoppingPdfService {
   }) async {
     final activeShops = shops.where((s) => s.active).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final byCategory = <String, List<CatalogItemEntity>>{};
-    for (final c in catalog.where((c) => c.active)) {
-      byCategory.putIfAbsent(c.category, () => []).add(c);
+    final headers = [...activeShops.map((s) => s.code), 'T'];
+    final rows = [
+      for (final item in _ordered(catalog))
+        _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {}),
+    ];
+    return _paperGrid(
+      title: 'GreenChain - Combined Shopping List',
+      date: date,
+      columnHeaders: headers,
+      rows: rows,
+    );
+  }
+
+  _PaperRow _buildComboRow(CatalogItemEntity item, List<ShopEntity> shops,
+      Map<String, int> perShop) {
+    var total = 0;
+    final cells = <String>[];
+    for (final s in shops) {
+      final q = perShop[s.id] ?? 0;
+      total += q;
+      cells.add(q > 0 ? '$q' : '');
     }
+    cells.add(total > 0 ? '$total' : '');
+    return _PaperRow(item.name, cells);
+  }
 
-    final headerCells = ['Item', ...activeShops.map((s) => s.code), 'Total'];
+  /// One shop's full sheet — the same paper layout with a single quantity
+  /// column headed by the shop code.
+  Future<Uint8List> shopSheet({
+    required String shopName,
+    required String shopCode,
+    required DateTime date,
+    required List<CatalogItemEntity> catalog,
+    required Map<String, int> qtyByItem,
+  }) async {
+    final rows = [
+      for (final item in _ordered(catalog))
+        _PaperRow(item.name,
+            [(qtyByItem[item.id] ?? 0) > 0 ? '${qtyByItem[item.id]}' : '']),
+    ];
+    return _paperGrid(
+      title: 'GreenChain - $shopName',
+      date: date,
+      columnHeaders: [shopCode.isEmpty ? 'Qty' : shopCode],
+      rows: rows,
+    );
+  }
 
-    List<pw.TableRow> categoryRows(List<CatalogItemEntity> items) {
-      final rows = <pw.TableRow>[];
-      for (final item in items) {
-        final perShop = qtyByItemShop[item.id] ?? const {};
-        var total = 0;
-        final cells = <String>[item.name];
-        for (final s in activeShops) {
-          final q = perShop[s.id] ?? 0;
-          total += q;
-          cells.add(q > 0 ? '$q' : '');
-        }
-        cells.add(total > 0 ? '$total' : '');
-        rows.add(_tableRow(cells));
-      }
-      return rows;
-    }
-
+  /// A shop's compact list of only the items it needs (quick loading list).
+  Future<Uint8List> shopCompact({
+    required String shopName,
+    required DateTime date,
+    required List<PdfLine> lines,
+  }) async {
+    final needed = lines.where((l) => l.quantity > 0).toList()
+      ..sort((a, b) => a.itemName.compareTo(b.itemName));
     final doc = _doc();
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (context) => [
-        _header('GreenChain - Combined Shopping List', _df.format(date)),
-        for (final entry in byCategory.entries) ...[
-          pw.SizedBox(height: 6),
-          pw.Text(entry.key,
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-          pw.Table(
-            border: pw.TableBorder.all(width: 0.5),
-            children: [
-              _tableRow(headerCells, bold: true),
-              ...categoryRows(entry.value),
-            ],
-          ),
-        ],
+        pw.Text('GreenChain - $shopName',
+            style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+        pw.Text(_df.format(date), style: const pw.TextStyle(fontSize: 10)),
+        pw.SizedBox(height: 8),
+        pw.Table(
+          border: pw.TableBorder.all(width: 0.5),
+          columnWidths: {0: const pw.FixedColumnWidth(40)},
+          children: [
+            pw.TableRow(children: [
+              pw.Padding(
+                  padding: const pw.EdgeInsets.all(3),
+                  child: pw.Text('Qty',
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+              pw.Padding(
+                  padding: const pw.EdgeInsets.all(3),
+                  child: pw.Text('Item',
+                      style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+            ]),
+            for (final l in needed)
+              pw.TableRow(children: [
+                pw.Padding(
+                    padding: const pw.EdgeInsets.all(3),
+                    child: pw.Text('${l.quantity}')),
+                pw.Padding(
+                    padding: const pw.EdgeInsets.all(3), child: pw.Text(l.itemName)),
+              ]),
+          ],
+        ),
+        if (needed.isEmpty)
+          pw.Padding(
+              padding: const pw.EdgeInsets.all(8),
+              child: pw.Text('Nothing needed today.')),
       ],
     ));
     return doc.save();
   }
-
-  pw.TableRow _tableRow(List<String> cells, {bool bold = false}) => pw.TableRow(
-        children: [
-          for (final c in cells)
-            pw.Padding(
-              padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: pw.Text(c,
-                  style: bold
-                      ? pw.TextStyle(fontWeight: pw.FontWeight.bold)
-                      : const pw.TextStyle()),
-            ),
-        ],
-      );
 }

@@ -67,6 +67,9 @@ class EntryActions {
   Future<void> setBought(String entryId, bool bought) =>
       _entries.setBought(entryId, bought);
 
+  Future<void> setBoughtBatch(Iterable<String> entryIds, bool bought) =>
+      _entries.setBoughtBatch(entryIds, bought);
+
   Future<void> completeCurrentCycle() async {
     final cycle = await _cycles.getOpenCycle();
     if (cycle != null) {
