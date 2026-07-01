@@ -36,9 +36,24 @@ class SeedService {
     var order = 0;
     for (final entry in AppConstants.predefinedShops.entries) {
       final name = entry.value;
-      final code = name.replaceAll(RegExp(r'[^A-Za-z]'), '').isNotEmpty
-          ? name.trim()[0].toUpperCase()
-          : entry.key[0].toUpperCase();
+
+      // Derive code from location word (after last ' - '), or fallback to key digits
+      String code;
+      if (name.contains(' - ')) {
+        final locationPart = name.split(' - ').last.trim();
+        if (locationPart.isNotEmpty && locationPart[0].toUpperCase().compareTo('A') >= 0 && locationPart[0].toUpperCase().compareTo('Z') <= 0) {
+          code = locationPart[0].toUpperCase();
+        } else {
+          // Fallback: extract digits from entry.key
+          final digits = RegExp(r'\d+').firstMatch(entry.key)?.group(0);
+          code = digits ?? '?';
+        }
+      } else {
+        // Fallback: extract digits from entry.key
+        final digits = RegExp(r'\d+').firstMatch(entry.key)?.group(0);
+        code = digits ?? '?';
+      }
+
       await shops.upsert(ShopEntity(
         id: entry.key,
         name: name,
