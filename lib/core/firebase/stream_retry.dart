@@ -5,8 +5,9 @@
 /// an error until the user reloads.
 Stream<T> retryingSnapshots<T>(
   Stream<T> Function() source, {
-  int maxAttempts = 8,
-  Duration baseDelay = const Duration(milliseconds: 350),
+  int maxAttempts = 15,
+  Duration baseDelay = const Duration(milliseconds: 400),
+  Duration maxDelay = const Duration(seconds: 3),
 }) async* {
   var attempt = 0;
   while (true) {
@@ -16,7 +17,8 @@ Stream<T> retryingSnapshots<T>(
     } catch (_) {
       attempt++;
       if (attempt >= maxAttempts) rethrow;
-      await Future<void>.delayed(baseDelay * attempt);
+      final delay = baseDelay * attempt;
+      await Future<void>.delayed(delay > maxDelay ? maxDelay : delay);
     }
   }
 }

@@ -7,6 +7,7 @@ import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/entry_view_mode_provider.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 import '../../widgets/entry_item_controls.dart';
 import '../../widgets/swipe_entry_deck.dart';
 
@@ -103,7 +104,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
           Expanded(
             child: catalogAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
               data: (catalog) =>
                   _grid(context, catalog, liveQty, shops, member?.id ?? ''),
             ),
@@ -148,41 +149,47 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
     }
 
     if (view == EntryViewMode.grid) {
-      return GridView.builder(
-        padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 190,
-          childAspectRatio: 1.05,
+      return RefreshIndicator(
+        onRefresh: () => refreshAppData(ref),
+        child: GridView.builder(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 190,
+            childAspectRatio: 1.05,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, i) {
+            final item = items[i];
+            final q = qtyOf(item);
+            return EntryCard(
+              name: item.name,
+              qty: q,
+              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onIncrement: () => set(item, q + 1),
+            );
+          },
         ),
-        itemCount: items.length,
-        itemBuilder: (context, i) {
-          final item = items[i];
-          final q = qtyOf(item);
-          return EntryCard(
-            name: item.name,
-            qty: q,
-            onDecrement: q > 0 ? () => set(item, q - 1) : null,
-            onIncrement: () => set(item, q + 1),
-          );
-        },
       );
     }
 
-    return ListView(
-      children: [
-        for (final item in items)
-          ListTile(
-            dense: true,
-            title: Text(item.name),
-            trailing: EntryQtyStepper(
-              qty: qtyOf(item),
-              onDecrement:
-                  qtyOf(item) > 0 ? () => set(item, qtyOf(item) - 1) : null,
-              onIncrement: () => set(item, qtyOf(item) + 1),
+    return RefreshIndicator(
+      onRefresh: () => refreshAppData(ref),
+      child: ListView(
+        children: [
+          for (final item in items)
+            ListTile(
+              dense: true,
+              title: Text(item.name),
+              trailing: EntryQtyStepper(
+                qty: qtyOf(item),
+                onDecrement:
+                    qtyOf(item) > 0 ? () => set(item, qtyOf(item) - 1) : null,
+                onIncrement: () => set(item, qtyOf(item) + 1),
+              ),
             ),
-          ),
-        const SizedBox(height: 80),
-      ],
+          const SizedBox(height: 80),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@ import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/data_error_retry.dart';
 
 /// Admin combined view: items down the side, each showing the total needed
 /// across shops plus a per-shop breakdown with bought toggles. This is the
@@ -22,16 +23,22 @@ class AdminDashboardPage extends ConsumerWidget {
 
     return entriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
       data: (entries) {
         if (entries.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'No items requested yet today.\nTap “Add items” to start the list.',
-                textAlign: TextAlign.center,
-              ),
+          return RefreshIndicator(
+            onRefresh: () => refreshAppData(ref),
+            child: ListView(
+              children: const [
+                SizedBox(height: 160),
+                Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'No items requested yet today.\nTap “Add items” to start the list.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ),
           );
         }
@@ -102,15 +109,18 @@ class AdminDashboardPage extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: ListView(
-                children: [
-                  for (final name in itemNames)
-                    _ItemTile(
-                      name: name,
-                      rows: byItem[name]!,
-                      shopName: shopName,
-                    ),
-                ],
+              child: RefreshIndicator(
+                onRefresh: () => refreshAppData(ref),
+                child: ListView(
+                  children: [
+                    for (final name in itemNames)
+                      _ItemTile(
+                        name: name,
+                        rows: byItem[name]!,
+                        shopName: shopName,
+                      ),
+                  ],
+                ),
               ),
             ),
           ],

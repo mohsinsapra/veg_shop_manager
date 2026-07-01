@@ -56,7 +56,20 @@ class AuthRepository {
   /// email is not an active member. Links the Firebase uid on first resolve.
   Future<MemberEntity?> resolveMember(String? email) async {
     if (email == null) return null;
-    final member = await _members.findByEmail(email);
+    // Retry: right after sign-in (especially on mobile) the auth token can lag
+    // behind, causing a transient permission-denied on this first read.
+    MemberEntity? member;
+    var attempt = 0;
+    while (true) {
+      try {
+        member = await _members.findByEmail(email);
+        break;
+      } catch (_) {
+        attempt++;
+        if (attempt >= 6) rethrow;
+        await Future<void>.delayed(Duration(milliseconds: 400 * attempt));
+      }
+    }
     if (member == null || !member.active) return null;
     if (member.uid == null && _auth.currentUser != null) {
       await _members.linkUid(member.id, _auth.currentUser!.uid);
