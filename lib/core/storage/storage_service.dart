@@ -17,6 +17,8 @@ abstract class StorageService {
   Future<String?> getAuthData(String key);
   Future<void> setAuthData(String key, String value);
   Future<void> removeAuthData(String key);
+  Future<String?> getLocale();
+  Future<void> setLocale(String languageCode);
   Future<void> close();
 }
 
@@ -79,6 +81,16 @@ class HiveStorageService implements StorageService {
   @override
   Future<void> removeAuthData(String key) async {
     await _authBox?.delete(key);
+  }
+
+  @override
+  Future<String?> getLocale() async {
+    return _authBox?.get('locale');
+  }
+
+  @override
+  Future<void> setLocale(String languageCode) async {
+    await _authBox?.put('locale', languageCode);
   }
 
   @override
@@ -262,6 +274,16 @@ class SharedPreferencesStorageService implements StorageService {
   @override
   Future<void> removeAuthData(String key) async {
     await _prefs?.remove('auth_$key');
+  }
+
+  @override
+  Future<String?> getLocale() async {
+    return _prefs?.getString('locale');
+  }
+
+  @override
+  Future<void> setLocale(String languageCode) async {
+    await _prefs?.setString('locale', languageCode);
   }
 
   @override
