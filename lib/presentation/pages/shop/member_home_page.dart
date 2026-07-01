@@ -8,6 +8,7 @@ import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
+import '../../providers/entry_view_mode_provider.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/entry_item_controls.dart';
 import '../../widgets/swipe_entry_deck.dart';
@@ -24,7 +25,6 @@ class MemberHomePage extends ConsumerStatefulWidget {
 class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   String? _shopId;
   String _search = '';
-  EntryViewMode _view = EntryViewMode.list;
 
   @override
   Widget build(BuildContext context) {
@@ -37,8 +37,8 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         title: const Text('GreenChain — My Shop'),
         actions: [
           EntryViewMenu(
-            mode: _view,
-            onChanged: (m) => setState(() => _view = m),
+            mode: ref.watch(entryViewModeProvider),
+            onChanged: (m) => ref.read(entryViewModeProvider.notifier).set(m),
           ),
           PopupMenuButton<bool>(
             icon: const Icon(Icons.print),
@@ -205,7 +205,8 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               createdBy: memberId,
             );
 
-    if (_view == EntryViewMode.swipe) {
+    final view = ref.watch(entryViewModeProvider);
+    if (view == EntryViewMode.swipe) {
       return SwipeEntryDeck(
         items: items,
         qtyByItem: {for (final it in items) it.id: qtyByItem[it.id] ?? 0},
@@ -213,7 +214,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       );
     }
 
-    if (_view == EntryViewMode.grid) {
+    if (view == EntryViewMode.grid) {
       return GridView.builder(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

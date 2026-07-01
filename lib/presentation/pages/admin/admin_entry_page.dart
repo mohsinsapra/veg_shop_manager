@@ -5,6 +5,7 @@ import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
+import '../../providers/entry_view_mode_provider.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/entry_item_controls.dart';
 import '../../widgets/swipe_entry_deck.dart';
@@ -22,7 +23,6 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
   static const allShops = '__ALL__';
   String _target = allShops;
   String _search = '';
-  EntryViewMode _view = EntryViewMode.list;
 
   /// Local, session-only override of the number shown per item (used for the
   /// "All shops" bulk mode and for immediate feedback).
@@ -61,8 +61,8 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
         title: const Text('Add items to the list'),
         actions: [
           EntryViewMenu(
-            mode: _view,
-            onChanged: (m) => setState(() => _view = m),
+            mode: ref.watch(entryViewModeProvider),
+            onChanged: (m) => ref.read(entryViewModeProvider.notifier).set(m),
           ),
         ],
       ),
@@ -137,8 +137,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
     }
 
     int qtyOf(CatalogItemEntity item) => _local[item.id] ?? liveQty[item.id] ?? 0;
+    final view = ref.watch(entryViewModeProvider);
 
-    if (_view == EntryViewMode.swipe) {
+    if (view == EntryViewMode.swipe) {
       return SwipeEntryDeck(
         items: items,
         qtyByItem: {for (final it in items) it.id: qtyOf(it)},
@@ -146,7 +147,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
       );
     }
 
-    if (_view == EntryViewMode.grid) {
+    if (view == EntryViewMode.grid) {
       return GridView.builder(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
