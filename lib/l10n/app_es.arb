@@ -4,5 +4,8 @@
   "settingsTitle": "Ajustes",
   "language": "Idioma",
   "languageSpanish": "Español",
-  "languageEnglish": "English"
+  "languageEnglish": "English",
+  "loginGoogleButton": "Iniciar sesión con Google",
+  "noAccessMessage": "No tienes acceso con esta cuenta.\nPide a tu administrador que te añada.",
+  "noAccessSignOutButton": "Cerrar sesión"
 }

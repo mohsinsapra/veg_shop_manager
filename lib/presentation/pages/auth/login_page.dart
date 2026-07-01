@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/firebase_auth_provider.dart';
 
 class LoginPage extends ConsumerWidget {
@@ -17,11 +18,11 @@ class LoginPage extends ConsumerWidget {
             children: [
               const Icon(Icons.eco, size: 64, color: Colors.green),
               const SizedBox(height: 16),
-              Text('GreenChain', style: Theme.of(context).textTheme.headlineMedium),
+              Text(context.l10n.appName, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 32),
               ElevatedButton.icon(
                 icon: const Icon(Icons.login),
-                label: const Text('Sign in with Google'),
+                label: Text(context.l10n.loginGoogleButton),
                 onPressed: () => ref.read(authControllerProvider.notifier).signIn(),
               ),
               if (error != null) ...[
