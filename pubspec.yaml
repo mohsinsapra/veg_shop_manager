@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # 🌐 Routing
   beamer: ^1.7.0                     # Declarative routing with nested support
@@ -52,7 +54,7 @@ dependencies:
   # 📱 UI & Utilities
   cupertino_icons: ^1.0.8
   flutter_svg: ^2.2.0                # SVG support for icons
-  intl: ^0.19.0                      # For date formatting
+  intl: ^0.20.2                      # For date formatting
   url_launcher: ^6.3.1               # For launching print preview or sharing PDF later
   flutter_speed_dial: ^7.0.0         # Speed dial floating action button
   pdf: ^3.12.0
@@ -78,6 +80,8 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  generate: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:

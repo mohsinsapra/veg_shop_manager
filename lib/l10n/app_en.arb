@@ -1,0 +1,7 @@
+{
+  "@@locale": "en",
+  "appName": "GreenChain",
+  "@appName": {
+    "description": "The application brand name (not translated)."
+  }
+}
