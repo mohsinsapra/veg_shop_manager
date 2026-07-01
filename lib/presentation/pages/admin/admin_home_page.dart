@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/firebase_auth_provider.dart';
 import 'admin_dashboard_page.dart';
+import 'admin_entry_page.dart';
 import 'history_page.dart';
 import 'shops_management_page.dart';
 import 'catalog_management_page.dart';
@@ -17,29 +18,34 @@ class AdminHomePage extends ConsumerStatefulWidget {
 class _AdminHomePageState extends ConsumerState<AdminHomePage> {
   int _index = 0;
 
-  static const _titles = ['Today', 'History', 'Shops', 'Catalog', 'Members'];
+  // Full section list. The first [_bottomCount] appear in the bottom bar; the
+  // hamburger drawer (top-left) exposes all of them.
+  static const _titles = ['Today', 'Catalog', 'Members', 'Shops', 'History'];
   static const _icons = [
     Icons.today,
-    Icons.history,
-    Icons.store,
     Icons.eco,
     Icons.people,
+    Icons.store,
+    Icons.history,
   ];
+  static const _bottomCount = 3;
 
   Widget _body() {
     switch (_index) {
       case 0:
         return const AdminDashboardPage();
       case 1:
-        return const HistoryPage();
-      case 2:
-        return const ShopsManagementPage();
-      case 3:
         return const CatalogManagementPage();
-      default:
+      case 2:
         return const MembersManagementPage();
+      case 3:
+        return const ShopsManagementPage();
+      default:
+        return const HistoryPage();
     }
   }
+
+  void _select(int i) => setState(() => _index = i);
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +61,36 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
           ),
         ],
       ),
+      drawer: Drawer(
+        child: SafeArea(
+          child: ListView(
+            children: [
+              const DrawerHeader(
+                child: Center(
+                  child: Text('GreenChain',
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                ),
+              ),
+              for (var i = 0; i < _titles.length; i++)
+                ListTile(
+                  leading: Icon(_icons[i]),
+                  title: Text(_titles[i]),
+                  selected: _index == i,
+                  onTap: () {
+                    _select(i);
+                    Navigator.pop(context); // close drawer
+                  },
+                ),
+            ],
+          ),
+        ),
+      ),
       body: Row(
         children: [
           if (wide)
             NavigationRail(
               selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              onDestinationSelected: _select,
               labelType: NavigationRailLabelType.all,
               destinations: [
                 for (var i = 0; i < _titles.length; i++)
@@ -76,16 +106,25 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       bottomNavigationBar: wide
           ? null
           : NavigationBar(
-              selectedIndex: _index,
-              onDestinationSelected: (i) => setState(() => _index = i),
+              selectedIndex: _index < _bottomCount ? _index : 0,
+              onDestinationSelected: _select,
               destinations: [
-                for (var i = 0; i < _titles.length; i++)
+                for (var i = 0; i < _bottomCount; i++)
                   NavigationDestination(
                     icon: Icon(_icons[i]),
                     label: _titles[i],
                   ),
               ],
             ),
+      floatingActionButton: _index == 0
+          ? FloatingActionButton.extended(
+              icon: const Icon(Icons.add),
+              label: const Text('Add items'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AdminEntryPage()),
+              ),
+            )
+          : null,
     );
   }
 }

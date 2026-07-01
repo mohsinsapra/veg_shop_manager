@@ -28,8 +28,10 @@ class AdminDashboardPage extends ConsumerWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('No items requested yet today.',
-                  textAlign: TextAlign.center),
+              child: Text(
+                'No items requested yet today.\nTap “Add items” to start the list.',
+                textAlign: TextAlign.center,
+              ),
             ),
           );
         }
@@ -40,8 +42,7 @@ class AdminDashboardPage extends ConsumerWidget {
         }
         final itemNames = byItem.keys.toList()..sort();
 
-        final totalUnits =
-            entries.fold<int>(0, (s, e) => s + e.quantity);
+        final totalUnits = entries.fold<int>(0, (s, e) => s + e.quantity);
         final boughtUnits = entries
             .where((e) => e.bought)
             .fold<int>(0, (s, e) => s + e.quantity);
