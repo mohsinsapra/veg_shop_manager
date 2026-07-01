@@ -65,4 +65,27 @@ void main() {
     expect(entries.single.bought, true);
     expect(entries.single.quantity, 9);
   });
+
+  test('hideCycle removes a cycle from watchCompleted', () async {
+    final repo = CycleRepository(refs);
+    final c = await repo.ensureOpenCycle(now);
+    await repo.completeCycle(c.id, now);
+    expect((await repo.watchCompleted().first).length, 1);
+
+    await repo.hideCycle(c.id);
+    expect(await repo.watchCompleted().first, isEmpty);
+  });
+
+  test('hideAllCompleted hides every completed cycle', () async {
+    final repo = CycleRepository(refs);
+    // create + complete two cycles
+    final c1 = await repo.ensureOpenCycle(now);
+    await repo.completeCycle(c1.id, now);
+    final c2 = await repo.ensureOpenCycle(now);
+    await repo.completeCycle(c2.id, now);
+    expect((await repo.watchCompleted().first).length, 2);
+
+    await repo.hideAllCompleted();
+    expect(await repo.watchCompleted().first, isEmpty);
+  });
 }

@@ -47,7 +47,28 @@ class CycleRepository {
       .snapshots()
       .map((snap) => (snap.docs
           .map((d) => CycleEntity.fromMap(d.id, d.data()))
+          .where((c) => c.hiddenAt == null)
           .toList()
         ..sort((a, b) => (b.completedAt ?? b.openedAt)
             .compareTo(a.completedAt ?? a.openedAt)))));
+
+  Future<void> hideCycle(String cycleId) =>
+      _refs.cycles.doc(cycleId).update({
+        'hiddenAt': DateTime.now().toUtc().toIso8601String(),
+      });
+
+  Future<void> hideAllCompleted() async {
+    final now = DateTime.now().toUtc().toIso8601String();
+    final snap =
+        await _refs.cycles.where('status', isEqualTo: 'completed').get();
+    final toHide =
+        snap.docs.where((d) => d.data()['hiddenAt'] == null).toList();
+    for (var i = 0; i < toHide.length; i += 500) {
+      final batch = _refs.db.batch();
+      for (final d in toHide.skip(i).take(500)) {
+        batch.update(d.reference, {'hiddenAt': now});
+      }
+      await batch.commit();
+    }
+  }
 }
