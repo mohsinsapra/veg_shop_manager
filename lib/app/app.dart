@@ -5,22 +5,24 @@ import 'router/app_router.dart';
 import 'theme/app_theme.dart';
 import '../core/constants/app_constants.dart';
 import '../presentation/providers/locale_provider.dart';
+import '../presentation/providers/theme_mode_provider.dart';
 
 class VegShopApp extends ConsumerWidget {
   const VegShopApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Language switching is disabled: always render in the default locale.
+    // Language and theme default to Spanish / light for everyone. Only the owner
+    // can change these (via the gated Settings screen), which updates the
+    // providers below; for all other users they stay at their defaults.
+    final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      // Always use the light (brand) theme; ignore the device's dark mode so the
-      // cream/green look stays consistent everywhere. Flip to ThemeMode.system
-      // to re-enable dark mode.
-      themeMode: ThemeMode.light,
-      locale: defaultAppLocale,
+      themeMode: themeMode,
+      locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       routerDelegate: AppRouter.routerDelegate,

@@ -7,6 +7,7 @@ import 'core/firebase/firebase_init.dart';
 import 'core/storage/storage_service.dart';
 import 'presentation/pdf/print_helpers.dart';
 import 'presentation/providers/locale_provider.dart';
+import 'presentation/providers/theme_mode_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,11 +24,16 @@ void main() async {
       ? defaultAppLocale
       : (savedCode == 'en' ? const Locale('en') : const Locale('es'));
 
+  final initialThemeMode = themeModeFromName(await storageService.getThemeMode());
+
   runApp(
     ProviderScope(
       overrides: [
         localeProvider.overrideWith(
           (ref) => LocaleController(storageService, initialLocale),
+        ),
+        themeModeProvider.overrideWith(
+          (ref) => ThemeModeController(storageService, initialThemeMode),
         ),
       ],
       child: const VegShopApp(),

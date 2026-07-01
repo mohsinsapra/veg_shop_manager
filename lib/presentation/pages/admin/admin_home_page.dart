@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/firebase_auth_provider.dart';
+import '../settings/settings_page.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_entry_page.dart';
 import 'history_page.dart';
@@ -54,6 +56,12 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
 
   void _select(int i) => setState(() => _index = i);
 
+  /// True only for the app owner, who alone sees the Settings entry.
+  bool get _isOwner {
+    final email = ref.watch(authControllerProvider).member?.email;
+    return email?.toLowerCase() == AppConstants.ownerEmail;
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width >= 720;
@@ -87,6 +95,19 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
                   onTap: () {
                     _select(i);
                     Navigator.pop(context); // close drawer
+                  },
+                ),
+              // Owner-only: language + theme settings, hidden from every other
+              // account so the app stays locked to Spanish / light for them.
+              if (_isOwner)
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: Text(context.l10n.settingsTitle),
+                  onTap: () {
+                    Navigator.pop(context); // close drawer
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SettingsPage()),
+                    );
                   },
                 ),
             ],

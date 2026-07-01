@@ -19,6 +19,8 @@ abstract class StorageService {
   Future<void> removeAuthData(String key);
   Future<String?> getLocale();
   Future<void> setLocale(String languageCode);
+  Future<String?> getThemeMode();
+  Future<void> setThemeMode(String mode);
   Future<void> close();
 }
 
@@ -91,6 +93,16 @@ class HiveStorageService implements StorageService {
   @override
   Future<void> setLocale(String languageCode) async {
     await _authBox?.put('locale', languageCode);
+  }
+
+  @override
+  Future<String?> getThemeMode() async {
+    return _authBox?.get('themeMode');
+  }
+
+  @override
+  Future<void> setThemeMode(String mode) async {
+    await _authBox?.put('themeMode', mode);
   }
 
   @override
@@ -284,6 +296,16 @@ class SharedPreferencesStorageService implements StorageService {
   @override
   Future<void> setLocale(String languageCode) async {
     await _prefs?.setString('locale', languageCode);
+  }
+
+  @override
+  Future<String?> getThemeMode() async {
+    return _prefs?.getString('themeMode');
+  }
+
+  @override
+  Future<void> setThemeMode(String mode) async {
+    await _prefs?.setString('themeMode', mode);
   }
 
   @override
