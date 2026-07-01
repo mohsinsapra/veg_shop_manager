@@ -362,5 +362,12 @@
         "type": "String"
       }
     }
-  }
+  },
+  "adminHistoryDeleteCycle": "Delete this history",
+  "adminHistoryDeleteConfirmTitle": "Delete history entry?",
+  "adminHistoryDeleteConfirmBody": "This history entry will be hidden and no longer appear in the list. This cannot be undone from the app.",
+  "adminHistoryClearAll": "Clear all history",
+  "adminHistoryClearAllConfirmTitle": "Clear all history?",
+  "adminHistoryClearAllConfirmBody": "All completed shopping history will be hidden and no longer appear. This cannot be undone from the app.",
+  "adminHistoryClearAllSuccess": "History cleared"
 }

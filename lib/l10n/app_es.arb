@@ -179,5 +179,12 @@
         "type": "String"
       }
     }
-  }
+  },
+  "adminHistoryDeleteCycle": "Eliminar este historial",
+  "adminHistoryDeleteConfirmTitle": "¿Eliminar entrada del historial?",
+  "adminHistoryDeleteConfirmBody": "Esta entrada del historial se ocultará y dejará de aparecer en la lista. Esta acción no se puede deshacer desde la aplicación.",
+  "adminHistoryClearAll": "Borrar todo el historial",
+  "adminHistoryClearAllConfirmTitle": "¿Borrar todo el historial?",
+  "adminHistoryClearAllConfirmBody": "Todo el historial de compras completado se ocultará y dejará de aparecer. Esta acción no se puede deshacer desde la aplicación.",
+  "adminHistoryClearAllSuccess": "Historial borrado"
 }
