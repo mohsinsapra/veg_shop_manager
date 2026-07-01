@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/l10n/l10n_extension.dart';
 
 /// How the entry catalog is presented.
 enum EntryViewMode { list, grid, swipe }
@@ -19,7 +20,7 @@ class EntryViewMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<EntryViewMode>(
       icon: Icon(_icon(mode)),
-      tooltip: 'View',
+      tooltip: context.l10n.entryControlsView,
       onSelected: onChanged,
       itemBuilder: (context) => [
         for (final m in EntryViewMode.values)
@@ -31,9 +32,9 @@ class EntryViewMenu extends StatelessWidget {
                   color: m == mode ? Theme.of(context).colorScheme.primary : null),
               const SizedBox(width: 12),
               Text(switch (m) {
-                EntryViewMode.list => 'List',
-                EntryViewMode.grid => 'Grid',
-                EntryViewMode.swipe => 'Swipe',
+                EntryViewMode.list => context.l10n.entryControlsList,
+                EntryViewMode.grid => context.l10n.entryControlsGrid,
+                EntryViewMode.swipe => context.l10n.entryControlsSwipe,
               }),
             ]),
           ),

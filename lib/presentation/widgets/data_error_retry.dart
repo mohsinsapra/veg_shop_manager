@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/l10n/l10n_extension.dart';
 import '../providers/entry_providers.dart';
 import '../providers/management_providers.dart';
 
@@ -32,7 +33,7 @@ class DataErrorRetry extends StatelessWidget {
           Center(
             child: FilledButton.icon(
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: Text(context.l10n.retry),
               onPressed: onRetry,
             ),
           ),

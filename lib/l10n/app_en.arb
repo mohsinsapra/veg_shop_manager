@@ -333,5 +333,20 @@
   "adminHistoryPrintTooltip": "Print this list",
   "adminEntryTitle": "Add items to the list",
   "adminEntryAllShops": "All shops",
-  "adminEntryAddForLabel": "Add for"
+  "adminEntryAddForLabel": "Add for",
+  "swipeNoItems": "No items.",
+  "swipeAllReviewed": "All items reviewed.",
+  "swipeStartOver": "Start over",
+  "swipePrevious": "Previous",
+  "swipeSkip": "Skip",
+  "swipeAdd": "Add",
+  "swipeDragHint": "Drag →  add     ←  skip",
+  "swipeOverlayAdd": "ADD",
+  "swipeOverlaySkip": "SKIP",
+  "itemCardTryAgain": "Try Again",
+  "itemCardErrorOops": "Oops! Something went wrong",
+  "entryControlsView": "View",
+  "entryControlsList": "List",
+  "entryControlsGrid": "Grid",
+  "entryControlsSwipe": "Swipe"
 }

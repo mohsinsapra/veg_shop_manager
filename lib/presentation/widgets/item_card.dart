@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/missing_item_entity.dart';
 import '../../core/constants/app_constants.dart';
+import '../../core/l10n/l10n_extension.dart';
 
 class ItemCard extends StatelessWidget {
   final MissingItemEntity item;
@@ -66,13 +67,13 @@ class ItemCard extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.edit, size: 20),
                 onPressed: onEdit,
-                tooltip: 'Edit',
+                tooltip: context.l10n.edit,
               ),
             if (onDelete != null)
               IconButton(
                 icon: const Icon(Icons.delete, size: 20),
                 onPressed: onDelete,
-                tooltip: 'Delete',
+                tooltip: context.l10n.delete,
               ),
           ],
         ),
@@ -184,7 +185,7 @@ class ErrorWidget extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Oops! Something went wrong',
+            context.l10n.itemCardErrorOops,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   color: Colors.red,
                   fontWeight: FontWeight.bold,
@@ -203,7 +204,7 @@ class ErrorWidget extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.refresh),
-              label: const Text('Try Again'),
+              label: Text(context.l10n.itemCardTryAgain),
             ),
           ],
         ],

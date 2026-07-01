@@ -150,5 +150,20 @@
   "adminHistoryPrintTooltip": "Imprimir esta lista",
   "adminEntryTitle": "Añadir artículos a la lista",
   "adminEntryAllShops": "Todas las tiendas",
-  "adminEntryAddForLabel": "Añadir para"
+  "adminEntryAddForLabel": "Añadir para",
+  "swipeNoItems": "No hay artículos.",
+  "swipeAllReviewed": "Todos los artículos revisados.",
+  "swipeStartOver": "Empezar de nuevo",
+  "swipePrevious": "Anterior",
+  "swipeSkip": "Saltar",
+  "swipeAdd": "Añadir",
+  "swipeDragHint": "Arrastra →  añadir     ←  saltar",
+  "swipeOverlayAdd": "AÑADIR",
+  "swipeOverlaySkip": "SALTAR",
+  "itemCardTryAgain": "Reintentar",
+  "itemCardErrorOops": "¡Vaya! Algo salió mal",
+  "entryControlsView": "Vista",
+  "entryControlsList": "Lista",
+  "entryControlsGrid": "Cuadrícula",
+  "entryControlsSwipe": "Deslizar"
 }

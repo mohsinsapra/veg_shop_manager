@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/l10n/l10n_extension.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import 'entry_item_controls.dart';
 
@@ -80,7 +81,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
   @override
   Widget build(BuildContext context) {
     final items = widget.items;
-    if (items.isEmpty) return const Center(child: Text('No items.'));
+    if (items.isEmpty) return Center(child: Text(context.l10n.swipeNoItems));
     if (_i >= items.length) {
       return Center(
         child: Column(
@@ -88,11 +89,11 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
           children: [
             Icon(Icons.check_circle, size: 64, color: Colors.green[600]),
             const SizedBox(height: 12),
-            const Text('All items reviewed.'),
+            Text(context.l10n.swipeAllReviewed),
             const SizedBox(height: 12),
             OutlinedButton.icon(
               icon: const Icon(Icons.replay),
-              label: const Text('Start over'),
+              label: Text(context.l10n.swipeStartOver),
               onPressed: () => setState(() => _i = 0),
             ),
           ],
@@ -166,19 +167,19 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
             children: [
               IconButton.filledTonal(
                 icon: const Icon(Icons.chevron_left),
-                tooltip: 'Previous',
+                tooltip: context.l10n.swipePrevious,
                 onPressed:
                     _i > 0 ? () => setState(() => _i--) : null,
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.close),
-                label: const Text('Skip'),
+                label: Text(context.l10n.swipeSkip),
                 style: FilledButton.styleFrom(backgroundColor: Colors.blueGrey),
                 onPressed: () => setState(() => _i++),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.check),
-                label: const Text('Add'),
+                label: Text(context.l10n.swipeAdd),
                 onPressed: () {
                   if (qty == 0) widget.onSet(item, 1);
                   setState(() => _i++);
@@ -236,15 +237,18 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
                         onIncrement: () => widget.onSet(item, qty + 1),
                       ),
                       const SizedBox(height: 6),
-                      Text('Drag →  add     ←  skip',
+                      Text(context.l10n.swipeDragHint,
                           style:
                               TextStyle(color: Colors.grey[500], fontSize: 12)),
                     ],
                   ),
                 ),
-                if (t > 0.05) _overlay('ADD', Colors.green, t, Alignment.topLeft),
+                if (t > 0.05)
+                  _overlay(context.l10n.swipeOverlayAdd, Colors.green, t,
+                      Alignment.topLeft),
                 if (t < -0.05)
-                  _overlay('SKIP', Colors.blueGrey, -t, Alignment.topRight),
+                  _overlay(context.l10n.swipeOverlaySkip, Colors.blueGrey, -t,
+                      Alignment.topRight),
               ],
             ),
           ),
