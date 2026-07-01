@@ -25,7 +25,7 @@ class MembersManagementPage extends ConsumerWidget {
                   child: Icon(m.isAdmin ? Icons.shield : Icons.person),
                 ),
                 title: Text(m.displayName),
-                subtitle: Text('${m.email} • ${m.role.name}'
+                subtitle: Text('${m.email} • ${m.role == MemberRole.admin ? context.l10n.adminMembersRoleAdmin : context.l10n.adminMembersRoleMember}'
                     '${m.shopIds.isEmpty ? '' : ' ${context.l10n.adminMembersShopsCount(m.shopIds.length)}'}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,

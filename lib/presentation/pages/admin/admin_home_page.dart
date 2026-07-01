@@ -64,14 +64,14 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
         title: Text(context.l10n.adminHomeAppBarTitle(titles[_index])),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: context.l10n.settingsTitle,
-            onPressed: () => context.beamToNamed('/settings'),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: context.l10n.logoutTooltip,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: context.l10n.settingsTitle,
+            onPressed: () => context.beamToNamed('/settings'),
           ),
         ],
       ),

@@ -43,11 +43,6 @@ class ShopHomePage extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: context.l10n.settingsTitle,
-            onPressed: () => context.beamToNamed('/settings'),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await authNotifier.logout();
@@ -56,6 +51,11 @@ class ShopHomePage extends ConsumerWidget {
               }
             },
             tooltip: context.l10n.logoutTooltip,
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: context.l10n.settingsTitle,
+            onPressed: () => context.beamToNamed('/settings'),
           ),
         ],
       ),
