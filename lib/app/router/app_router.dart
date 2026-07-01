@@ -8,6 +8,7 @@ import '../../presentation/pages/shop/step_by_step_add_page.dart';
 import '../../presentation/pages/admin/admin_page.dart';
 import '../../presentation/pages/admin/debug_admin_page.dart';
 import '../../presentation/pages/admin/shopping_history_page.dart';
+import '../../presentation/pages/settings/settings_page.dart';
 
 class AppRouter {
   static final routerDelegate = BeamerDelegate(
@@ -48,6 +49,10 @@ class AppRouter {
         '/admin/history': (context, state, data) => const BeamPage(
           key: ValueKey('shopping-history'),
           child: ShoppingHistoryPage(),
+        ),
+        '/settings': (context, state, data) => const BeamPage(
+          key: ValueKey('settings'),
+          child: SettingsPage(),
         ),
       },
     ),

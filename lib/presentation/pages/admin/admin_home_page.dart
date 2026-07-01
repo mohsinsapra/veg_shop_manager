@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:beamer/beamer.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/firebase_auth_provider.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_entry_page.dart';
@@ -54,6 +56,11 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       appBar: AppBar(
         title: Text('GreenChain — ${_titles[_index]}'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: context.l10n.settingsTitle,
+            onPressed: () => context.beamToNamed('/settings'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sign out',

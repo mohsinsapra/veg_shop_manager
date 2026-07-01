@@ -4,6 +4,7 @@ import 'package:beamer/beamer.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/missing_item_provider.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../domain/entities/missing_item_entity.dart';
 
@@ -41,6 +42,11 @@ class ShopHomePage extends ConsumerWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: context.l10n.settingsTitle,
+            onPressed: () => context.beamToNamed('/settings'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

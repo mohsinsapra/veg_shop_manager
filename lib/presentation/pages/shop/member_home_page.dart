@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:beamer/beamer.dart';
+import '../../../core/l10n/l10n_extension.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
@@ -59,6 +61,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
                       child: Text('Print combined (all my shops)')),
               ];
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: context.l10n.settingsTitle,
+            onPressed: () => context.beamToNamed('/settings'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),

@@ -3,5 +3,9 @@
   "appName": "GreenChain",
   "@appName": {
     "description": "The application brand name (not translated)."
-  }
+  },
+  "settingsTitle": "Settings",
+  "language": "Language",
+  "languageSpanish": "Español",
+  "languageEnglish": "English"
 }

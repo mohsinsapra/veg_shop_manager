@@ -1,4 +1,8 @@
 {
   "@@locale": "es",
-  "appName": "GreenChain"
+  "appName": "GreenChain",
+  "settingsTitle": "Ajustes",
+  "language": "Idioma",
+  "languageSpanish": "Español",
+  "languageEnglish": "English"
 }
