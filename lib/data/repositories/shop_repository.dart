@@ -1,13 +1,14 @@
 import '../datasources/remote/firestore_refs.dart';
+import '../../core/firebase/stream_retry.dart';
 import '../../domain/entities/shop_entity.dart';
 
 class ShopRepository {
   final FirestoreRefs _refs;
   ShopRepository(this._refs);
 
-  Stream<List<ShopEntity>> watchAll() =>
+  Stream<List<ShopEntity>> watchAll() => retryingSnapshots(() =>
       _refs.shops.orderBy('sortOrder').snapshots().map((snap) =>
-          snap.docs.map((d) => ShopEntity.fromMap(d.id, d.data())).toList());
+          snap.docs.map((d) => ShopEntity.fromMap(d.id, d.data())).toList()));
 
   Future<void> upsert(ShopEntity shop) =>
       _refs.shops.doc(shop.id).set(shop.toMap());

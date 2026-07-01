@@ -15,18 +15,40 @@ class SeedService {
 
   Future<void> seedCatalogIfEmpty() async {
     if (await catalog.count() > 0) return;
-    var order = 0;
-    for (final entry in AppConstants.predefinedItems.entries) {
-      for (final name in entry.value) {
-        await catalog.upsert(CatalogItemEntity(
-          id: 'seed_${order.toString().padLeft(4, '0')}',
-          name: name,
-          category: entry.key,
-          sortOrder: order,
-          active: true,
-        ));
-        order++;
+
+    // Flatten (name, category) preserving category declaration order.
+    final all = <MapEntry<String, String>>[];
+    AppConstants.predefinedItems.forEach((category, items) {
+      for (final name in items) {
+        all.add(MapEntry(name, category));
       }
+    });
+
+    // Order by the paper sheet sequence; items not on the paper are appended
+    // after, keeping their original relative order.
+    final paperIndex = {
+      for (var i = 0; i < AppConstants.paperOrder.length; i++)
+        AppConstants.paperOrder[i]: i,
+    };
+    final origIndex = {for (var i = 0; i < all.length; i++) all[i].key: i};
+    all.sort((a, b) {
+      final ia = paperIndex[a.key] ??
+          (AppConstants.paperOrder.length + origIndex[a.key]!);
+      final ib = paperIndex[b.key] ??
+          (AppConstants.paperOrder.length + origIndex[b.key]!);
+      return ia.compareTo(ib);
+    });
+
+    var order = 0;
+    for (final entry in all) {
+      await catalog.upsert(CatalogItemEntity(
+        id: 'seed_${order.toString().padLeft(4, '0')}',
+        name: entry.key,
+        category: entry.value,
+        sortOrder: order,
+        active: true,
+      ));
+      order++;
     }
   }
 

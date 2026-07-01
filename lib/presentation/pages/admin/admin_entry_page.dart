@@ -6,6 +6,7 @@ import '../../../domain/entities/shop_entity.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/entry_item_controls.dart';
 
 /// Lets the admin add needed quantities on behalf of a specific shop, or apply
 /// the same quantity to ALL active shops at once. Complements member entry.
@@ -20,6 +21,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
   static const allShops = '__ALL__';
   String _target = allShops;
   String _search = '';
+  bool _gridView = false;
 
   /// Local, session-only override of the number shown per item (used for the
   /// "All shops" bulk mode and for immediate feedback).
@@ -54,7 +56,16 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add items to the list')),
+      appBar: AppBar(
+        title: const Text('Add items to the list'),
+        actions: [
+          IconButton(
+            icon: Icon(_gridView ? Icons.view_list : Icons.grid_view),
+            tooltip: _gridView ? 'List view' : 'Grid view',
+            onPressed: () => setState(() => _gridView = !_gridView),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
@@ -110,18 +121,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    return ListView(
-      children: [
-        for (final item in items)
-          _row(item, _local[item.id] ?? liveQty[item.id] ?? 0, shops, memberId),
-        const SizedBox(height: 80),
-      ],
-    );
-  }
-
-  Widget _row(CatalogItemEntity item, int qty, List<ShopEntity> shops,
-      String memberId) {
-    Future<void> set(int q) async {
+    Future<void> set(CatalogItemEntity item, int q) async {
       setState(() => _local[item.id] = q);
       final actions = ref.read(entryActionsProvider);
       final targets = _target == allShops ? shops.map((s) => s.id) : [_target];
@@ -136,30 +136,44 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
       }
     }
 
-    return ListTile(
-      dense: true,
-      title: Text(item.name),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.remove_circle_outline),
-            onPressed: qty > 0 ? () => set(qty - 1) : null,
+    int qtyOf(CatalogItemEntity item) => _local[item.id] ?? liveQty[item.id] ?? 0;
+
+    if (_gridView) {
+      return GridView.builder(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 190,
+          childAspectRatio: 1.05,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          final q = qtyOf(item);
+          return EntryCard(
+            name: item.name,
+            qty: q,
+            onDecrement: q > 0 ? () => set(item, q - 1) : null,
+            onIncrement: () => set(item, q + 1),
+          );
+        },
+      );
+    }
+
+    return ListView(
+      children: [
+        for (final item in items)
+          ListTile(
+            dense: true,
+            title: Text(item.name),
+            trailing: EntryQtyStepper(
+              qty: qtyOf(item),
+              onDecrement:
+                  qtyOf(item) > 0 ? () => set(item, qtyOf(item) - 1) : null,
+              onIncrement: () => set(item, qtyOf(item) + 1),
+            ),
           ),
-          SizedBox(
-            width: 44,
-            child: Text('$qty',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: qty > 0 ? Colors.green[800] : Colors.grey)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () => set(qty + 1),
-          ),
-        ],
-      ),
+        const SizedBox(height: 80),
+      ],
     );
   }
 }

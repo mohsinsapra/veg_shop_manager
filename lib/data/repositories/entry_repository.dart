@@ -1,23 +1,25 @@
 import '../datasources/remote/firestore_refs.dart';
+import '../../core/firebase/stream_retry.dart';
 import '../../domain/entities/entry_entity.dart';
 
 class EntryRepository {
   final FirestoreRefs _refs;
   EntryRepository(this._refs);
 
-  Stream<List<EntryEntity>> watchByCycle(String cycleId) => _refs.entries
-      .where('cycleId', isEqualTo: cycleId)
-      .snapshots()
-      .map((snap) =>
-          snap.docs.map((d) => EntryEntity.fromMap(d.id, d.data())).toList());
+  Stream<List<EntryEntity>> watchByCycle(String cycleId) =>
+      retryingSnapshots(() => _refs.entries
+          .where('cycleId', isEqualTo: cycleId)
+          .snapshots()
+          .map((snap) =>
+              snap.docs.map((d) => EntryEntity.fromMap(d.id, d.data())).toList()));
 
   Stream<List<EntryEntity>> watchByCycleAndShop(String cycleId, String shopId) =>
-      _refs.entries
+      retryingSnapshots(() => _refs.entries
           .where('cycleId', isEqualTo: cycleId)
           .where('shopId', isEqualTo: shopId)
           .snapshots()
           .map((snap) =>
-              snap.docs.map((d) => EntryEntity.fromMap(d.id, d.data())).toList());
+              snap.docs.map((d) => EntryEntity.fromMap(d.id, d.data())).toList()));
 
   Future<List<EntryEntity>> getByCycle(String cycleId) async {
     final snap = await _refs.entries.where('cycleId', isEqualTo: cycleId).get();

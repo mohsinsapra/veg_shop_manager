@@ -1,5 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../datasources/remote/firestore_refs.dart';
+import '../../core/firebase/stream_retry.dart';
 import '../../domain/entities/cycle_entity.dart';
 
 class CycleRepository {
@@ -14,11 +15,11 @@ class CycleRepository {
     return CycleEntity.fromMap(d.id, d.data());
   }
 
-  Stream<CycleEntity?> watchOpenCycle() =>
+  Stream<CycleEntity?> watchOpenCycle() => retryingSnapshots(() =>
       _refs.cycles.where('status', isEqualTo: 'open').limit(1).snapshots().map(
           (snap) => snap.docs.isEmpty
               ? null
-              : CycleEntity.fromMap(snap.docs.first.id, snap.docs.first.data()));
+              : CycleEntity.fromMap(snap.docs.first.id, snap.docs.first.data())));
 
   /// Returns the current open cycle, creating one if none exists.
   Future<CycleEntity> ensureOpenCycle(DateTime now) async {
@@ -40,12 +41,13 @@ class CycleRepository {
         'completedAt': now.toUtc().toIso8601String(),
       });
 
-  Stream<List<CycleEntity>> watchCompleted() => _refs.cycles
+  Stream<List<CycleEntity>> watchCompleted() => retryingSnapshots(() => _refs
+      .cycles
       .where('status', isEqualTo: 'completed')
       .snapshots()
       .map((snap) => (snap.docs
           .map((d) => CycleEntity.fromMap(d.id, d.data()))
           .toList()
         ..sort((a, b) => (b.completedAt ?? b.openedAt)
-            .compareTo(a.completedAt ?? a.openedAt))));
+            .compareTo(a.completedAt ?? a.openedAt)))));
 }

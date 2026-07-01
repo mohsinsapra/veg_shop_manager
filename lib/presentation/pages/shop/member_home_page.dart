@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
@@ -8,6 +9,7 @@ import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
+import '../../widgets/entry_item_controls.dart';
 
 /// Shop staff entry: pick the active shop, then set needed quantities for
 /// catalog items (searchable grid). Members can span multiple shops.
@@ -21,6 +23,7 @@ class MemberHomePage extends ConsumerStatefulWidget {
 class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   String? _shopId;
   String _search = '';
+  bool _gridView = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +35,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       appBar: AppBar(
         title: const Text('GreenChain — My Shop'),
         actions: [
+          IconButton(
+            icon: Icon(_gridView ? Icons.view_list : Icons.grid_view),
+            tooltip: _gridView ? 'List view' : 'Grid view',
+            onPressed: () => setState(() => _gridView = !_gridView),
+          ),
           PopupMenuButton<bool>(
             icon: const Icon(Icons.print),
             tooltip: 'Print',
@@ -73,6 +81,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
 
           return Column(
             children: [
+              _dateBanner(),
               _shopSelector(myShops),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -154,61 +163,85 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     );
   }
 
+  Widget _dateBanner() {
+    final cycle = ref.watch(openCycleProvider).valueOrNull;
+    final date = cycle?.openedAt.toLocal() ?? DateTime.now();
+    final label = cycle == null
+        ? 'New list · ${DateFormat('EEE, d MMM yyyy').format(date)}'
+        : 'List for ${DateFormat('EEE, d MMM yyyy').format(date)}';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: Row(
+        children: [
+          const Icon(Icons.event, size: 16),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+
   Widget _grid(BuildContext context, ShopEntity shop,
       List<CatalogItemEntity> catalog, String memberId) {
-    final entriesAsync = ref.watch(shopEntriesProvider(shop.id));
-    final entries = entriesAsync.valueOrNull ?? const <EntryEntity>[];
+    final entries = ref.watch(shopEntriesProvider(shop.id)).valueOrNull ??
+        const <EntryEntity>[];
     final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
 
-    // Flat list in catalog (paper) order — the provider already sorts by
-    // sortOrder, which now matches the paper sheet sequence.
+    // Flat list in catalog (paper) order — the provider sorts by sortOrder,
+    // which matches the paper sheet sequence.
     final items = catalog
         .where((c) => c.active)
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
+    Future<void> set(CatalogItemEntity item, int q) =>
+        ref.read(entryActionsProvider).submitQuantity(
+              shopId: shop.id,
+              itemId: item.id,
+              itemName: item.name,
+              quantity: q,
+              createdBy: memberId,
+            );
+
+    if (_gridView) {
+      return GridView.builder(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 190,
+          childAspectRatio: 1.05,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          final q = qtyByItem[item.id] ?? 0;
+          return EntryCard(
+            name: item.name,
+            qty: q,
+            onDecrement: q > 0 ? () => set(item, q - 1) : null,
+            onIncrement: () => set(item, q + 1),
+          );
+        },
+      );
+    }
+
     return ListView(
       children: [
         for (final item in items)
-          _row(shop.id, item, qtyByItem[item.id] ?? 0, memberId),
+          ListTile(
+            dense: true,
+            title: Text(item.name),
+            trailing: EntryQtyStepper(
+              qty: qtyByItem[item.id] ?? 0,
+              onDecrement: (qtyByItem[item.id] ?? 0) > 0
+                  ? () => set(item, (qtyByItem[item.id] ?? 0) - 1)
+                  : null,
+              onIncrement: () => set(item, (qtyByItem[item.id] ?? 0) + 1),
+            ),
+          ),
         const SizedBox(height: 80),
       ],
-    );
-  }
-
-  Widget _row(String shopId, CatalogItemEntity item, int qty, String memberId) {
-    Future<void> set(int q) => ref.read(entryActionsProvider).submitQuantity(
-          shopId: shopId,
-          itemId: item.id,
-          itemName: item.name,
-          quantity: q,
-          createdBy: memberId,
-        );
-
-    return ListTile(
-      dense: true,
-      title: Text(item.name),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.remove_circle_outline),
-            onPressed: qty > 0 ? () => set(qty - 1) : null,
-          ),
-          SizedBox(
-            width: 44,
-            child: Text('$qty',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: qty > 0 ? Colors.green[800] : Colors.grey)),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed: () => set(qty + 1),
-          ),
-        ],
-      ),
     );
   }
 }

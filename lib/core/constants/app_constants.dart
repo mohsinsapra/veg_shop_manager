@@ -243,4 +243,37 @@ class AppConstants {
   static List<String> get allPredefinedItems {
     return predefinedItems.values.expand((items) => items).toList()..sort();
   }
+
+  /// The exact order items appear on the paper stock sheet (Verduras col 1 →
+  /// Verduras col 2 → Frutas col 3). Seeding assigns sortOrder by this order so
+  /// a fresh install lists items the same way the shop's paper does. Any
+  /// catalog item not in this list is appended after, keeping its group order.
+  static const List<String> paperOrder = [
+    'Apio', 'Aguacate', 'Aguacate UND', 'Alcachofa', 'Ajo Malla', 'Ajo Seco',
+    'Acelga', 'Borraja', 'Berenjena N', 'Berenjena R', 'Brócoli', 'Champiñones',
+    'Seta', 'Calabacín', 'Calabaza', 'Coliflor', 'Col De hoja', 'Boniato',
+    'Ajo Tierno', 'Cebolla Tierna', 'Cardo', 'Endivia', 'Espinaca', 'Jengibre',
+    'Lechuga Romana', 'Iceberg', 'Batavia', 'Cogollo', 'Escarola', 'Roble',
+    'Espárrago', 'Repollo', 'Nabos', 'Remolacha', 'Chirivía', 'Rábanos', 'Judía',
+    'Judía Extra', 'Limón', 'Lima', 'Macho Verde', 'Plátano Maduro', 'Yuca',
+    'Pimiento Rojo', 'Pimiento Rojo 2', 'Pimiento Italiano', 'Pim Palermo',
+    'California', 'Padrón', 'Picante', 'Pepino', 'Puerro', 'Pomelo',
+    'Tomate Oferta', 'Tomate Daniela', 'Tomate Pera', 'Tomate Rama', 'Tomate Raf',
+    'Tomate Pink', 'Tomate Ensalada', 'Tomate Rosa', 'Tomate Cherry', 'Banana',
+    'Plátano', 'Ciruela Roja', 'Ciruela Amarilla', 'Ciruela Claudia', 'Fresa',
+    'Fresa Extra', 'Cereza 2nd', 'Kiwi Oferta', 'Kiwi Zespri', 'Kiwi Italiano',
+    'Kiwi Gold', 'Caqui 1st', 'Caqui 2nd', 'Mango', 'Mango Extra', 'Melón',
+    'Melón Bollo', 'Manzana Oferta', 'Golden 1st', 'Golden 2nd', 'Fuji 1st',
+    'Fuji 2nd', 'Roja 1st', 'Roja 2nd', 'Royal Gala 1st', 'Royal Gala 2nd',
+    'Verde Doncella', 'Pink Lady', 'Granny', 'Reineta', 'Manzana Chantecler',
+    'Nueces', 'Dátiles', 'Castaña', 'Granada', 'Granada Extra', 'Pera Oferta',
+    'Conferencia 2nd', 'Pera Agua', 'Pera Limonera', 'Pera Roma', 'Pera Ercolina',
+    'Papaya', 'Chirimoya', 'Piña Normal', 'Piña Monte', 'Uva Blanca',
+    'Uva sin pepita', 'Uva Roja', 'Garnacha', 'Naranja Bolsa 2k',
+    'Naranja Bolsa 4k', 'Naranja Mesa', 'Naranja Ripoll', 'Naranja Oferta',
+    'Mandarina Extra', 'Mandarina Hoja', 'Mandarina Valencia', 'Mandarina Oferta',
+    'Mandarina', 'Patata Lavada', 'Patata Roja', 'Patata 5 Kilo', 'Cebolla Seca',
+    'Cebolla Roja', 'Cebolla Dulce', 'Zanahoria', 'Oliva Negra', 'Oliva Revuelto',
+    'Oliva Manzanilla', 'Oliva Hechizos', 'Higos',
+  ];
 }

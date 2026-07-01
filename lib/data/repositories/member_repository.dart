@@ -1,4 +1,5 @@
 import '../datasources/remote/firestore_refs.dart';
+import '../../core/firebase/stream_retry.dart';
 import '../../domain/entities/member_entity.dart';
 
 class MemberRepository {
@@ -25,7 +26,7 @@ class MemberRepository {
   Future<void> linkUid(String id, String uid) =>
       _refs.members.doc(id.toLowerCase()).update({'uid': uid});
 
-  Stream<List<MemberEntity>> watchAll() =>
+  Stream<List<MemberEntity>> watchAll() => retryingSnapshots(() =>
       _refs.members.orderBy('displayName').snapshots().map((snap) =>
-          snap.docs.map((d) => MemberEntity.fromMap(d.id, d.data())).toList());
+          snap.docs.map((d) => MemberEntity.fromMap(d.id, d.data())).toList()));
 }
