@@ -88,6 +88,8 @@ class AppConstants {
       'Zanahoria',
       'Robellones',
       'Hierbabuena',
+      'Boniato',
+      'Cebolla Seca',
     ],
     'Tomatoes': [
       'Tomate Oferta',
@@ -115,6 +117,9 @@ class AppConstants {
       'Pim Africano',
       'Padrón',
       'Picante',
+      'Oliva Manzanilla',
+      'Oliva Hechizos',
+      'Oliva Revuelto',
     ],
     'Tropical & Exotic': [
       'Limón',
@@ -171,6 +176,9 @@ class AppConstants {
       'Naranja Bolsa 2k',
       'Naranja Bolsa 4k',
       'Pomelo',
+      'Naranja Ripoll',
+      'Mandarina',
+      'Mandarina Extra',
     ],
     'Apples & Pears': [
       'Manzana Oferta',
@@ -193,6 +201,7 @@ class AppConstants {
       'Pera Limonera',
       'Pera Roma',
       'Pera Ercolina',
+      'Manzana Chantecler',
     ],
     'Other Fruits': [
       'Kiwi Oferta',
@@ -216,6 +225,11 @@ class AppConstants {
       'Garnacha',
       'Persimón',
       'Sanguina',
+      'Fresa',
+      'Fresa Extra',
+      'Melón Bollo',
+      'Uva sin pepita',
+      'Higos',
     ],
     'Accessories': [
       'Bolsa Verde',
