@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/cycle_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
@@ -102,28 +104,33 @@ class HistoryPage extends ConsumerWidget {
     );
   }
 
+  // All data-fetching happens INSIDE runPrint's build closure so the print
+  // can't silently no-op if the history list rebuilds mid-fetch.
+
   Future<void> _printCycleCombined(
-      BuildContext context, WidgetRef ref, String cycleId) async {
-    final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
-    if (!context.mounted) return;
-    await _printCombined(context, ref, entries, 'greenchain-history-combined.pdf');
+      BuildContext context, WidgetRef ref, String cycleId) {
+    return runPrint(context, (svc) async {
+      final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
+      return _buildCombined(ref, svc, entries);
+    }, name: 'greenchain-history-combined.pdf');
   }
 
   Future<void> _printAllCombined(
-      BuildContext context, WidgetRef ref, List<CycleEntity> cycles) async {
-    final repo = ref.read(entryRepositoryProvider);
-    final all = <EntryEntity>[];
-    for (final c in cycles) {
-      all.addAll(await repo.getByCycle(c.id));
-    }
-    if (!context.mounted) return;
-    await _printCombined(context, ref, all, 'greenchain-history-all.pdf');
+      BuildContext context, WidgetRef ref, List<CycleEntity> cycles) {
+    return runPrint(context, (svc) async {
+      final repo = ref.read(entryRepositoryProvider);
+      final all = <EntryEntity>[];
+      for (final c in cycles) {
+        all.addAll(await repo.getByCycle(c.id));
+      }
+      return _buildCombined(ref, svc, all);
+    }, name: 'greenchain-history-all.pdf');
   }
 
-  /// Shared: build a combined paper grid from a set of entries (summed by
-  /// item+shop, so aggregating multiple cycles works).
-  Future<void> _printCombined(BuildContext context, WidgetRef ref,
-      List<EntryEntity> entries, String fileName) async {
+  /// Builds a combined paper grid from a set of entries (summed by item+shop,
+  /// so aggregating multiple cycles works).
+  Future<Uint8List> _buildCombined(
+      WidgetRef ref, ShoppingPdfService svc, List<EntryEntity> entries) async {
     final catalog = await ref.read(catalogProvider.future);
     final shops = (await ref.read(shopsProvider.future))
         .where((s) => s.active)
@@ -134,43 +141,35 @@ class HistoryPage extends ConsumerWidget {
       final byShop = qty.putIfAbsent(e.itemId, () => {});
       byShop[e.shopId] = (byShop[e.shopId] ?? 0) + e.quantity;
     }
-    if (!context.mounted) return;
-    await runPrint(
-      context,
-      (svc) => svc.adminFullGrid(
-        date: DateTime.now(),
-        shops: shops,
-        catalog: catalog,
-        qtyByItemShop: qty,
-      ),
-      name: fileName,
+    return svc.adminFullGrid(
+      date: DateTime.now(),
+      shops: shops,
+      catalog: catalog,
+      qtyByItemShop: qty,
     );
   }
 
   Future<void> _printCycleShop(
-      BuildContext context, WidgetRef ref, String cycleId, String shopId) async {
-    final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
-    final shops = await ref.read(shopsProvider.future);
-    final catalog = await ref.read(catalogProvider.future);
-    final shop = shops.firstWhere((s) => s.id == shopId,
-        orElse: () => shops.isEmpty
-            ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
-            : shops.first);
-    final qtyByItem = <String, int>{};
-    for (final e in entries.where((e) => e.shopId == shopId)) {
-      qtyByItem[e.itemId] = (qtyByItem[e.itemId] ?? 0) + e.quantity;
-    }
-    if (!context.mounted) return;
-    await runPrint(
-      context,
-      (svc) => svc.shopSheet(
+      BuildContext context, WidgetRef ref, String cycleId, String shopId) {
+    return runPrint(context, (svc) async {
+      final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
+      final shops = await ref.read(shopsProvider.future);
+      final catalog = await ref.read(catalogProvider.future);
+      final shop = shops.firstWhere((s) => s.id == shopId,
+          orElse: () => shops.isEmpty
+              ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
+              : shops.first);
+      final qtyByItem = <String, int>{};
+      for (final e in entries.where((e) => e.shopId == shopId)) {
+        qtyByItem[e.itemId] = (qtyByItem[e.itemId] ?? 0) + e.quantity;
+      }
+      return svc.shopSheet(
         shopName: shop.name,
         shopCode: shop.code,
         date: DateTime.now(),
         catalog: catalog,
         qtyByItem: qtyByItem,
-      ),
-      name: 'greenchain-history-${shop.code}.pdf',
-    );
+      );
+    }, name: 'greenchain-history-shop.pdf');
   }
 }

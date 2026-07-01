@@ -41,14 +41,24 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             mode: ref.watch(entryViewModeProvider),
             onChanged: (m) => ref.read(entryViewModeProvider.notifier).set(m),
           ),
-          PopupMenuButton<bool>(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.print),
             tooltip: 'Print',
-            onSelected: (fullSheet) => _print(fullSheet),
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: false, child: Text('Print my list')),
-              PopupMenuItem(value: true, child: Text('Print full sheet')),
-            ],
+            onSelected: _print,
+            itemBuilder: (context) {
+              final multi = (ref.read(authControllerProvider).member?.shopIds
+                          .length ??
+                      0) >
+                  1;
+              return [
+                const PopupMenuItem(value: 'compact', child: Text('Print my list')),
+                const PopupMenuItem(value: 'sheet', child: Text('Print full sheet')),
+                if (multi)
+                  const PopupMenuItem(
+                      value: 'combined',
+                      child: Text('Print combined (all my shops)')),
+              ];
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -111,21 +121,43 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     );
   }
 
-  Future<void> _print(bool fullSheet) async {
+  Future<void> _print(String mode) async {
     final shopId = _shopId;
     if (shopId == null) return;
-    final shops = ref.read(shopsProvider).valueOrNull ?? const <ShopEntity>[];
-    final shop = shops.firstWhere((s) => s.id == shopId,
-        orElse: () => shops.isEmpty
-            ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
-            : shops.first);
-    final catalog = await ref.read(catalogProvider.future);
-    final entries = await ref.read(shopEntriesProvider(shopId).future);
-    final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
-    if (!mounted) return;
-    await runPrint(
-      context,
-      (svc) => fullSheet
+    // Data-fetching happens inside runPrint so it can't silently no-op, and on
+    // mobile the PDF is shared via the OS sheet.
+    await runPrint(context, (svc) async {
+      final catalog = await ref.read(catalogProvider.future);
+      final shops = await ref.read(shopsProvider.future);
+      final shop = shops.firstWhere((s) => s.id == shopId,
+          orElse: () => shops.isEmpty
+              ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
+              : shops.first);
+
+      if (mode == 'combined') {
+        // Combined grid of every shop this member has access to.
+        final member = ref.read(authControllerProvider).member;
+        final myShopIds = member?.shopIds ?? const <String>[];
+        final myShops = shops
+            .where((s) => s.active && myShopIds.contains(s.id))
+            .toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        final allEntries = await ref.read(openCycleEntriesProvider.future);
+        final qty = <String, Map<String, int>>{};
+        for (final e in allEntries.where((e) => myShopIds.contains(e.shopId))) {
+          (qty[e.itemId] ??= {})[e.shopId] = e.quantity;
+        }
+        return svc.adminFullGrid(
+          date: DateTime.now(),
+          shops: myShops,
+          catalog: catalog,
+          qtyByItemShop: qty,
+        );
+      }
+
+      final entries = await ref.read(shopEntriesProvider(shopId).future);
+      final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
+      return mode == 'sheet'
           ? svc.shopSheet(
               shopName: shop.name,
               shopCode: shop.code,
@@ -140,9 +172,8 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
                 for (final c in catalog.where((c) => c.active))
                   PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
               ],
-            ),
-      name: 'greenchain-${shop.code}.pdf',
-    );
+            );
+    }, name: 'greenchain-$mode.pdf');
   }
 
   Widget _shopSelector(List<ShopEntity> shops) {

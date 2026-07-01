@@ -154,54 +154,47 @@ class AdminDashboardPage extends ConsumerWidget {
   }
 
   Future<void> _printCombined(BuildContext context, WidgetRef ref,
-      List<EntryEntity> entries, List<ShopEntity> shops) async {
-    // Await the data so the PDF is never built from a not-yet-loaded (empty)
-    // Firestore snapshot on the first print.
-    final catalog = await ref.read(catalogProvider.future);
-    final loadedShops = (await ref.read(shopsProvider.future))
-        .where((s) => s.active)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final qty = <String, Map<String, int>>{};
-    for (final e in entries) {
-      qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
-    }
-    if (!context.mounted) return;
-    await runPrint(
-      context,
-      (svc) => svc.adminFullGrid(
+      List<EntryEntity> entries, List<ShopEntity> shops) {
+    return runPrint(context, (svc) async {
+      final catalog = await ref.read(catalogProvider.future);
+      final loadedShops = (await ref.read(shopsProvider.future))
+          .where((s) => s.active)
+          .toList()
+        ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+      final qty = <String, Map<String, int>>{};
+      for (final e in entries) {
+        qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
+      }
+      return svc.adminFullGrid(
         date: DateTime.now(),
         shops: loadedShops,
         catalog: catalog,
         qtyByItemShop: qty,
-      ),
-      name: 'greenchain-combined.pdf',
-    );
+      );
+    }, name: 'greenchain-combined.pdf');
   }
 
   Future<void> _printShop(BuildContext context, WidgetRef ref,
-      List<EntryEntity> entries, String shopId) async {
-    final shops = await ref.read(shopsProvider.future);
-    final catalog = await ref.read(catalogProvider.future);
-    final shop = shops.firstWhere((s) => s.id == shopId,
-        orElse: () => shops.isEmpty
-            ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
-            : shops.first);
-    final qtyByItem = {
-      for (final e in entries.where((e) => e.shopId == shopId)) e.itemId: e.quantity,
-    };
-    if (!context.mounted) return;
-    await runPrint(
-      context,
-      (svc) => svc.shopSheet(
+      List<EntryEntity> entries, String shopId) {
+    return runPrint(context, (svc) async {
+      final shops = await ref.read(shopsProvider.future);
+      final catalog = await ref.read(catalogProvider.future);
+      final shop = shops.firstWhere((s) => s.id == shopId,
+          orElse: () => shops.isEmpty
+              ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
+              : shops.first);
+      final qtyByItem = {
+        for (final e in entries.where((e) => e.shopId == shopId))
+          e.itemId: e.quantity,
+      };
+      return svc.shopSheet(
         shopName: shop.name,
         shopCode: shop.code,
         date: DateTime.now(),
         catalog: catalog,
         qtyByItem: qtyByItem,
-      ),
-      name: 'greenchain-${shop.code}.pdf',
-    );
+      );
+    }, name: 'greenchain-$shopId.pdf');
   }
 
   void _confirmComplete(BuildContext context, WidgetRef ref) {
