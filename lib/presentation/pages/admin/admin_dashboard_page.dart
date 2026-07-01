@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../data/pdf/shopping_pdf_service.dart';
+import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
+import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/management_providers.dart';
 
@@ -48,12 +51,18 @@ class AdminDashboardPage extends ConsumerWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: Text(
-                'Today · ${itemNames.length} items · $boughtUnits/$totalUnits units bought',
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Today · ${itemNames.length} items · $boughtUnits/$totalUnits units bought',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  _printMenu(context, ref, entries),
+                ],
               ),
             ),
             if (allBought)
@@ -109,6 +118,68 @@ class AdminDashboardPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Widget _printMenu(BuildContext context, WidgetRef ref, List<EntryEntity> entries) {
+    final shops = (ref.watch(shopsProvider).valueOrNull ?? const <ShopEntity>[])
+        .where((s) => s.active)
+        .toList()
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.print),
+      tooltip: 'Print',
+      onSelected: (value) async {
+        if (value == 'combined') {
+          await _printCombined(context, ref, entries, shops);
+        } else {
+          await _printShop(context, ref, entries, value);
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'combined', child: Text('Combined grid (all shops)')),
+        const PopupMenuDivider(),
+        for (final s in shops)
+          PopupMenuItem(value: s.id, child: Text('${s.name} list')),
+      ],
+    );
+  }
+
+  Future<void> _printCombined(BuildContext context, WidgetRef ref,
+      List<EntryEntity> entries, List<ShopEntity> shops) async {
+    final catalog =
+        ref.read(catalogProvider).valueOrNull ?? const <CatalogItemEntity>[];
+    final qty = <String, Map<String, int>>{};
+    for (final e in entries) {
+      qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
+    }
+    final svc = await buildPdfService();
+    final bytes = await svc.adminFullGrid(
+      date: DateTime.now(),
+      shops: shops,
+      catalog: catalog,
+      qtyByItemShop: qty,
+    );
+    await printBytes(bytes, name: 'greenchain-combined.pdf');
+  }
+
+  Future<void> _printShop(BuildContext context, WidgetRef ref,
+      List<EntryEntity> entries, String shopId) async {
+    final shops = ref.read(shopsProvider).valueOrNull ?? const <ShopEntity>[];
+    final shop = shops.firstWhere((s) => s.id == shopId,
+        orElse: () => shops.isEmpty
+            ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
+            : shops.first);
+    final lines = [
+      for (final e in entries.where((e) => e.shopId == shopId))
+        PdfLine('', e.itemName, e.quantity),
+    ]..sort((a, b) => a.itemName.compareTo(b.itemName));
+    final svc = await buildPdfService();
+    final bytes = await svc.shopCompact(
+      shopName: shop.name,
+      date: DateTime.now(),
+      lines: lines,
+    );
+    await printBytes(bytes, name: 'greenchain-${shop.code}.pdf');
   }
 
   void _confirmComplete(BuildContext context, WidgetRef ref) {

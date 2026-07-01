@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
+import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
@@ -30,6 +32,15 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       appBar: AppBar(
         title: const Text('GreenChain — My Shop'),
         actions: [
+          PopupMenuButton<bool>(
+            icon: const Icon(Icons.print),
+            tooltip: 'Print',
+            onSelected: (fullSheet) => _print(fullSheet),
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: false, child: Text('Print my list')),
+              PopupMenuItem(value: true, child: Text('Print full sheet')),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Sign out',
@@ -88,6 +99,29 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         },
       ),
     );
+  }
+
+  Future<void> _print(bool fullSheet) async {
+    final shopId = _shopId;
+    if (shopId == null) return;
+    final shops = ref.read(shopsProvider).valueOrNull ?? const <ShopEntity>[];
+    final shop = shops.firstWhere((s) => s.id == shopId,
+        orElse: () => shops.isEmpty
+            ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
+            : shops.first);
+    final catalog = (ref.read(catalogProvider).valueOrNull ?? const <CatalogItemEntity>[])
+        .where((c) => c.active)
+        .toList();
+    final entries = ref.read(shopEntriesProvider(shopId)).valueOrNull ?? const <EntryEntity>[];
+    final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
+    final lines = [
+      for (final c in catalog) PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
+    ];
+    final svc = await buildPdfService();
+    final bytes = fullSheet
+        ? await svc.shopGrid(shopName: shop.name, date: DateTime.now(), lines: lines)
+        : await svc.shopCompact(shopName: shop.name, date: DateTime.now(), lines: lines);
+    await printBytes(bytes, name: 'greenchain-${shop.code}.pdf');
   }
 
   Widget _shopSelector(List<ShopEntity> shops) {
