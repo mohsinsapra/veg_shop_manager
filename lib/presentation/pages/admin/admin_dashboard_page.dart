@@ -161,7 +161,7 @@ class AdminDashboardPage extends ConsumerWidget {
 
   Future<void> _printCombined(BuildContext context, WidgetRef ref,
       List<EntryEntity> entries, List<ShopEntity> shops) {
-    return runPrint(context, (svc) async {
+    return runPrint(context, (svc, l10n) async {
       final catalog = await ref.read(catalogProvider.future);
       final loadedShops = (await ref.read(shopsProvider.future))
           .where((s) => s.active)
@@ -176,13 +176,14 @@ class AdminDashboardPage extends ConsumerWidget {
         shops: loadedShops,
         catalog: catalog,
         qtyByItemShop: qty,
+        l10n: l10n,
       );
     }, name: 'greenchain-combined.pdf');
   }
 
   Future<void> _printShop(BuildContext context, WidgetRef ref,
       List<EntryEntity> entries, String shopId) {
-    return runPrint(context, (svc) async {
+    return runPrint(context, (svc, l10n) async {
       final shops = await ref.read(shopsProvider.future);
       final catalog = await ref.read(catalogProvider.future);
       final shop = shops.firstWhere((s) => s.id == shopId,
@@ -199,6 +200,7 @@ class AdminDashboardPage extends ConsumerWidget {
         date: DateTime.now(),
         catalog: catalog,
         qtyByItem: qtyByItem,
+        l10n: l10n,
       );
     }, name: 'greenchain-$shopId.pdf');
   }

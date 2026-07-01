@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:veg_shop_manager/l10n/app_localizations.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import '../../domain/entities/shop_entity.dart';
 
@@ -33,7 +33,25 @@ class ShoppingPdfService {
   final pw.Font? bold;
   ShoppingPdfService({this.base, this.bold});
 
-  final _df = DateFormat('EEE, d MMM yyyy');
+  // Weekday/month abbreviations so the date reads correctly in the app locale
+  // without depending on intl locale data being initialized at runtime.
+  static const _esDays = ['lun', 'mar', 'mié', 'jue', 'vie', 'sáb', 'dom'];
+  static const _esMonths = [
+    'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+    'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+  ];
+  static const _enDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  static const _enMonths = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  String _fmtDate(DateTime d, AppLocalizations l10n) {
+    final isEs = l10n.localeName == 'es';
+    final days = isEs ? _esDays : _enDays;
+    final months = isEs ? _esMonths : _enMonths;
+    return '${days[d.weekday - 1]}, ${d.day} ${months[d.month - 1]} ${d.year}';
+  }
 
   pw.Document _doc() {
     if (base == null) return pw.Document();
@@ -54,6 +72,7 @@ class ShoppingPdfService {
     required DateTime date,
     required List<String> columnHeaders,
     required List<_PaperRow> rows,
+    required AppLocalizations l10n,
   }) {
     const blocks = 3;
     final perCol = math.max(1, (rows.length / blocks).ceil());
@@ -73,10 +92,13 @@ class ShoppingPdfService {
           ),
         );
 
-    // Header row repeated for each block.
+    // Header row repeated for each block. The item column is headed like the
+    // paper sheet: the first two blocks are vegetables (VERDURAS), the last is
+    // fruit (FRUTAS).
+    const blockTitles = ['VERDURAS', 'VERDURAS', 'FRUTAS'];
     final header = <pw.Widget>[];
     for (var b = 0; b < blocks; b++) {
-      header.add(cell('Item', bold: true));
+      header.add(cell(blockTitles[b], bold: true));
       for (final h in columnHeaders) {
         header.add(cell(h, header: true));
       }
@@ -117,7 +139,7 @@ class ShoppingPdfService {
         children: [
           pw.Text(title,
               style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-          pw.Text(_df.format(date), style: const pw.TextStyle(fontSize: 8)),
+          pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 8)),
           pw.SizedBox(height: 4),
           pw.Table(
             border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey700),
@@ -136,6 +158,7 @@ class ShoppingPdfService {
     required List<ShopEntity> shops,
     required List<CatalogItemEntity> catalog,
     required Map<String, Map<String, int>> qtyByItemShop, // itemId -> shopId -> qty
+    required AppLocalizations l10n,
   }) async {
     final activeShops = shops.where((s) => s.active).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
@@ -145,10 +168,11 @@ class ShoppingPdfService {
         _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {}),
     ];
     return _paperGrid(
-      title: 'GreenChain - Combined Shopping List',
+      title: 'GreenChain - Lista combinada',
       date: date,
       columnHeaders: headers,
       rows: rows,
+      l10n: l10n,
     );
   }
 
@@ -173,6 +197,7 @@ class ShoppingPdfService {
     required DateTime date,
     required List<CatalogItemEntity> catalog,
     required Map<String, int> qtyByItem,
+    required AppLocalizations l10n,
   }) async {
     final rows = [
       for (final item in _ordered(catalog))
@@ -182,8 +207,9 @@ class ShoppingPdfService {
     return _paperGrid(
       title: 'GreenChain - $shopName',
       date: date,
-      columnHeaders: [shopCode.isEmpty ? 'Qty' : shopCode],
+      columnHeaders: [shopCode.isEmpty ? l10n.pdfQtyHeader : shopCode],
       rows: rows,
+      l10n: l10n,
     );
   }
 
@@ -192,6 +218,7 @@ class ShoppingPdfService {
     required String shopName,
     required DateTime date,
     required List<PdfLine> lines,
+    required AppLocalizations l10n,
   }) async {
     final needed = lines.where((l) => l.quantity > 0).toList()
       ..sort((a, b) => a.itemName.compareTo(b.itemName));
@@ -201,7 +228,7 @@ class ShoppingPdfService {
       build: (context) => [
         pw.Text('GreenChain - $shopName',
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
-        pw.Text(_df.format(date), style: const pw.TextStyle(fontSize: 10)),
+        pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 10)),
         pw.SizedBox(height: 8),
         pw.Table(
           border: pw.TableBorder.all(width: 0.5),
@@ -210,11 +237,11 @@ class ShoppingPdfService {
             pw.TableRow(children: [
               pw.Padding(
                   padding: const pw.EdgeInsets.all(3),
-                  child: pw.Text('Qty',
+                  child: pw.Text(l10n.pdfQtyHeader,
                       style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
               pw.Padding(
                   padding: const pw.EdgeInsets.all(3),
-                  child: pw.Text('Item',
+                  child: pw.Text(l10n.pdfProductHeader,
                       style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
             ]),
             for (final l in needed)
@@ -230,7 +257,7 @@ class ShoppingPdfService {
         if (needed.isEmpty)
           pw.Padding(
               padding: const pw.EdgeInsets.all(8),
-              child: pw.Text('Nothing needed today.')),
+              child: pw.Text(l10n.pdfNothingNeeded)),
       ],
     ));
     return doc.save();

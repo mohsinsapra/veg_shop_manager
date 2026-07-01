@@ -165,5 +165,16 @@
   "entryControlsView": "Vista",
   "entryControlsList": "Lista",
   "entryControlsGrid": "Cuadrícula",
-  "entryControlsSwipe": "Deslizar"
+  "entryControlsSwipe": "Deslizar",
+  "pdfQtyHeader": "Cant.",
+  "pdfProductHeader": "Producto",
+  "pdfNothingNeeded": "Nada necesario hoy.",
+  "printFailed": "Error al imprimir: {error}",
+  "@printFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

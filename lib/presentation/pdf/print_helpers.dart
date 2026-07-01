@@ -2,6 +2,8 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
+import 'package:veg_shop_manager/core/l10n/l10n_extension.dart';
+import 'package:veg_shop_manager/l10n/app_localizations.dart';
 import '../../data/pdf/shopping_pdf_service.dart';
 
 /// Builds a PDF service with Unicode fonts so Spanish accents render. Fonts are
@@ -44,15 +46,16 @@ Future<void> printBytes(Uint8List bytes, {String name = 'greenchain.pdf'}) async
 /// an uncaught error (font fetch, print dialog, etc.).
 Future<void> runPrint(
   BuildContext context,
-  Future<Uint8List> Function(ShoppingPdfService svc) build, {
+  Future<Uint8List> Function(ShoppingPdfService svc, AppLocalizations l10n) build, {
   String name = 'greenchain.pdf',
 }) async {
   final messenger = ScaffoldMessenger.of(context);
+  final l10n = context.l10n;
   try {
     final svc = await buildPdfService();
-    final bytes = await build(svc);
+    final bytes = await build(svc, l10n);
     await printBytes(bytes, name: name);
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text('Print failed: $e')));
+    messenger.showSnackBar(SnackBar(content: Text(l10n.printFailed(e.toString()))));
   }
 }

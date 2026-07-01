@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/cycle_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
@@ -113,28 +114,28 @@ class HistoryPage extends ConsumerWidget {
 
   Future<void> _printCycleCombined(
       BuildContext context, WidgetRef ref, String cycleId) {
-    return runPrint(context, (svc) async {
+    return runPrint(context, (svc, l10n) async {
       final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
-      return _buildCombined(ref, svc, entries);
+      return _buildCombined(ref, svc, l10n, entries);
     }, name: 'greenchain-history-combined.pdf');
   }
 
   Future<void> _printAllCombined(
       BuildContext context, WidgetRef ref, List<CycleEntity> cycles) {
-    return runPrint(context, (svc) async {
+    return runPrint(context, (svc, l10n) async {
       final repo = ref.read(entryRepositoryProvider);
       final all = <EntryEntity>[];
       for (final c in cycles) {
         all.addAll(await repo.getByCycle(c.id));
       }
-      return _buildCombined(ref, svc, all);
+      return _buildCombined(ref, svc, l10n, all);
     }, name: 'greenchain-history-all.pdf');
   }
 
   /// Builds a combined paper grid from a set of entries (summed by item+shop,
   /// so aggregating multiple cycles works).
-  Future<Uint8List> _buildCombined(
-      WidgetRef ref, ShoppingPdfService svc, List<EntryEntity> entries) async {
+  Future<Uint8List> _buildCombined(WidgetRef ref, ShoppingPdfService svc,
+      AppLocalizations l10n, List<EntryEntity> entries) async {
     final catalog = await ref.read(catalogProvider.future);
     final shops = (await ref.read(shopsProvider.future))
         .where((s) => s.active)
@@ -150,12 +151,13 @@ class HistoryPage extends ConsumerWidget {
       shops: shops,
       catalog: catalog,
       qtyByItemShop: qty,
+      l10n: l10n,
     );
   }
 
   Future<void> _printCycleShop(
       BuildContext context, WidgetRef ref, String cycleId, String shopId) {
-    return runPrint(context, (svc) async {
+    return runPrint(context, (svc, l10n) async {
       final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
       final shops = await ref.read(shopsProvider.future);
       final catalog = await ref.read(catalogProvider.future);
@@ -173,6 +175,7 @@ class HistoryPage extends ConsumerWidget {
         date: DateTime.now(),
         catalog: catalog,
         qtyByItem: qtyByItem,
+        l10n: l10n,
       );
     }, name: 'greenchain-history-shop.pdf');
   }

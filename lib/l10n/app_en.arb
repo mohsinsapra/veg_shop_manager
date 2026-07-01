@@ -348,5 +348,16 @@
   "entryControlsView": "View",
   "entryControlsList": "List",
   "entryControlsGrid": "Grid",
-  "entryControlsSwipe": "Swipe"
+  "entryControlsSwipe": "Swipe",
+  "pdfQtyHeader": "Qty",
+  "pdfProductHeader": "Product",
+  "pdfNothingNeeded": "Nothing needed today.",
+  "printFailed": "Print failed: {error}",
+  "@printFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

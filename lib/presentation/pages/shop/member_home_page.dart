@@ -67,11 +67,6 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             tooltip: context.l10n.logoutTooltip,
             onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
           ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            tooltip: context.l10n.settingsTitle,
-            onPressed: () => context.beamToNamed('/settings'),
-          ),
         ],
       ),
       body: shopsAsync.when(
@@ -133,7 +128,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     if (shopId == null) return;
     // Data-fetching happens inside runPrint so it can't silently no-op, and on
     // mobile the PDF is shared via the OS sheet.
-    await runPrint(context, (svc) async {
+    await runPrint(context, (svc, l10n) async {
       final catalog = await ref.read(catalogProvider.future);
       final shops = await ref.read(shopsProvider.future);
       final shop = shops.firstWhere((s) => s.id == shopId,
@@ -159,6 +154,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
           shops: myShops,
           catalog: catalog,
           qtyByItemShop: qty,
+          l10n: l10n,
         );
       }
 
@@ -171,6 +167,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               date: DateTime.now(),
               catalog: catalog,
               qtyByItem: qtyByItem,
+              l10n: l10n,
             )
           : svc.shopCompact(
               shopName: shop.name,
@@ -179,6 +176,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
                 for (final c in catalog.where((c) => c.active))
                   PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
               ],
+              l10n: l10n,
             );
     }, name: 'greenchain-$mode.pdf');
   }
