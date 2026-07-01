@@ -7,6 +7,7 @@ import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/entry_item_controls.dart';
+import '../../widgets/swipe_entry_deck.dart';
 
 /// Lets the admin add needed quantities on behalf of a specific shop, or apply
 /// the same quantity to ALL active shops at once. Complements member entry.
@@ -21,7 +22,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
   static const allShops = '__ALL__';
   String _target = allShops;
   String _search = '';
-  bool _gridView = false;
+  EntryViewMode _view = EntryViewMode.list;
 
   /// Local, session-only override of the number shown per item (used for the
   /// "All shops" bulk mode and for immediate feedback).
@@ -59,10 +60,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
       appBar: AppBar(
         title: const Text('Add items to the list'),
         actions: [
-          IconButton(
-            icon: Icon(_gridView ? Icons.view_list : Icons.grid_view),
-            tooltip: _gridView ? 'List view' : 'Grid view',
-            onPressed: () => setState(() => _gridView = !_gridView),
+          EntryViewMenu(
+            mode: _view,
+            onChanged: (m) => setState(() => _view = m),
           ),
         ],
       ),
@@ -138,7 +138,15 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     int qtyOf(CatalogItemEntity item) => _local[item.id] ?? liveQty[item.id] ?? 0;
 
-    if (_gridView) {
+    if (_view == EntryViewMode.swipe) {
+      return SwipeEntryDeck(
+        items: items,
+        qtyByItem: {for (final it in items) it.id: qtyOf(it)},
+        onSet: (item, q) => set(item, q),
+      );
+    }
+
+    if (_view == EntryViewMode.grid) {
       return GridView.builder(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(

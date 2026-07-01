@@ -1,5 +1,47 @@
 import 'package:flutter/material.dart';
 
+/// How the entry catalog is presented.
+enum EntryViewMode { list, grid, swipe }
+
+/// A view-mode picker (list / grid / swipe) for the app bar.
+class EntryViewMenu extends StatelessWidget {
+  final EntryViewMode mode;
+  final ValueChanged<EntryViewMode> onChanged;
+  const EntryViewMenu({super.key, required this.mode, required this.onChanged});
+
+  IconData _icon(EntryViewMode m) => switch (m) {
+        EntryViewMode.list => Icons.view_list,
+        EntryViewMode.grid => Icons.grid_view,
+        EntryViewMode.swipe => Icons.style,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    return PopupMenuButton<EntryViewMode>(
+      icon: Icon(_icon(mode)),
+      tooltip: 'View',
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final m in EntryViewMode.values)
+          PopupMenuItem(
+            value: m,
+            child: Row(children: [
+              Icon(_icon(m),
+                  size: 20,
+                  color: m == mode ? Theme.of(context).colorScheme.primary : null),
+              const SizedBox(width: 12),
+              Text(switch (m) {
+                EntryViewMode.list => 'List',
+                EntryViewMode.grid => 'Grid',
+                EntryViewMode.swipe => 'Swipe',
+              }),
+            ]),
+          ),
+      ],
+    );
+  }
+}
+
 /// A compact quantity stepper: − [qty] + . Used in both list and grid entry views.
 class EntryQtyStepper extends StatelessWidget {
   final int qty;

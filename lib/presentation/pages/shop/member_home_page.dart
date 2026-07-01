@@ -10,6 +10,7 @@ import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/entry_item_controls.dart';
+import '../../widgets/swipe_entry_deck.dart';
 
 /// Shop staff entry: pick the active shop, then set needed quantities for
 /// catalog items (searchable grid). Members can span multiple shops.
@@ -23,7 +24,7 @@ class MemberHomePage extends ConsumerStatefulWidget {
 class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   String? _shopId;
   String _search = '';
-  bool _gridView = false;
+  EntryViewMode _view = EntryViewMode.list;
 
   @override
   Widget build(BuildContext context) {
@@ -35,10 +36,9 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       appBar: AppBar(
         title: const Text('GreenChain — My Shop'),
         actions: [
-          IconButton(
-            icon: Icon(_gridView ? Icons.view_list : Icons.grid_view),
-            tooltip: _gridView ? 'List view' : 'Grid view',
-            onPressed: () => setState(() => _gridView = !_gridView),
+          EntryViewMenu(
+            mode: _view,
+            onChanged: (m) => setState(() => _view = m),
           ),
           PopupMenuButton<bool>(
             icon: const Icon(Icons.print),
@@ -205,7 +205,15 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               createdBy: memberId,
             );
 
-    if (_gridView) {
+    if (_view == EntryViewMode.swipe) {
+      return SwipeEntryDeck(
+        items: items,
+        qtyByItem: {for (final it in items) it.id: qtyByItem[it.id] ?? 0},
+        onSet: (item, q) => set(item, q),
+      );
+    }
+
+    if (_view == EntryViewMode.grid) {
       return GridView.builder(
         padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
