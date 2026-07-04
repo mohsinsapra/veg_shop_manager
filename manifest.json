@@ -1,11 +1,11 @@
 {
-    "name": "GreenChain — Fruit Shop",
-    "short_name": "GreenChain",
+    "name": "Frutas Deliciosas — Autoservicio",
+    "short_name": "Frutas Deliciosas",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#F5F8F0",
     "theme_color": "#5AA45A",
-    "description": "GreenChain — daily fruit & vegetable shop stock manager.",
+    "description": "Frutas Deliciosas — daily fruit & vegetable shop stock manager.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
