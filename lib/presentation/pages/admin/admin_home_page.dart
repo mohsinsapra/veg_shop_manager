@@ -83,7 +83,7 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
             children: [
               const DrawerHeader(
                 child: Center(
-                  child: Text('GreenChain',
+                  child: Text('Frutas Deliciosas',
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
                 ),
               ),

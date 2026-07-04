@@ -36,11 +36,29 @@ final completedCyclesProvider = StreamProvider<List<CycleEntity>>((ref) {
   return ref.watch(cycleRepositoryProvider).watchCompleted();
 });
 
+/// Live entries of one cycle, so expanded history cards reflect changes
+/// immediately instead of showing a one-shot snapshot.
+final cycleEntriesProvider =
+    StreamProvider.family<List<EntryEntity>, String>((ref, cycleId) {
+  return ref.watch(entryRepositoryProvider).watchByCycle(cycleId);
+});
+
 /// Actions that need to coordinate cycle + entries (ensure an open cycle etc.).
 class EntryActions {
   final CycleRepository _cycles;
   final EntryRepository _entries;
-  EntryActions(this._cycles, this._entries);
+  final CycleEntity? Function()? _cachedOpenCycle;
+  EntryActions(this._cycles, this._entries,
+      {CycleEntity? Function()? cachedOpenCycle})
+      : _cachedOpenCycle = cachedOpenCycle;
+
+  /// Uses the open cycle already held by the live stream when available,
+  /// avoiding a server query on every quantity tap.
+  Future<CycleEntity> _ensureCycle(DateTime now) async {
+    final cached = _cachedOpenCycle?.call();
+    if (cached != null) return cached;
+    return _cycles.ensureOpenCycle(now);
+  }
 
   Future<void> submitQuantity({
     required String shopId,
@@ -49,12 +67,30 @@ class EntryActions {
     required int quantity,
     required String createdBy,
     String? notes,
+  }) =>
+      submitQuantityToShops(
+        shopIds: [shopId],
+        itemId: itemId,
+        itemName: itemName,
+        quantity: quantity,
+        createdBy: createdBy,
+        notes: notes,
+      );
+
+  /// Same quantity for one item across many shops in one batched write.
+  Future<void> submitQuantityToShops({
+    required List<String> shopIds,
+    required String itemId,
+    required String itemName,
+    required int quantity,
+    required String createdBy,
+    String? notes,
   }) async {
     final now = DateTime.now().toUtc();
-    final cycle = await _cycles.ensureOpenCycle(now);
-    await _entries.setQuantity(
+    final cycle = await _ensureCycle(now);
+    await _entries.setQuantityForShops(
       cycleId: cycle.id,
-      shopId: shopId,
+      shopIds: shopIds,
       itemId: itemId,
       itemName: itemName,
       quantity: quantity,
@@ -82,5 +118,6 @@ final entryActionsProvider = Provider<EntryActions>((ref) {
   return EntryActions(
     ref.watch(cycleRepositoryProvider),
     ref.watch(entryRepositoryProvider),
+    cachedOpenCycle: () => ref.read(openCycleProvider).valueOrNull,
   );
 });

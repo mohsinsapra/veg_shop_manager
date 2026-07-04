@@ -172,7 +172,7 @@ class ShoppingPdfService {
         _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {}),
     ];
     return _paperGrid(
-      title: 'GreenChain - ${l10n.pdfCombinedTitle}',
+      title: 'Frutas Deliciosas - ${l10n.pdfCombinedTitle}',
       date: date,
       columnHeaders: headers,
       rows: rows,
@@ -209,7 +209,7 @@ class ShoppingPdfService {
             [(qtyByItem[item.id] ?? 0) > 0 ? '${qtyByItem[item.id]}' : '']),
     ];
     return _paperGrid(
-      title: 'GreenChain - $shopName',
+      title: 'Frutas Deliciosas - $shopName',
       date: date,
       columnHeaders: [shopCode.isEmpty ? l10n.pdfQtyHeader : shopCode],
       rows: rows,
@@ -230,7 +230,7 @@ class ShoppingPdfService {
     doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       build: (context) => [
-        pw.Text('GreenChain - $shopName',
+        pw.Text('Frutas Deliciosas - $shopName',
             style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
         pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 10)),
         pw.SizedBox(height: 8),

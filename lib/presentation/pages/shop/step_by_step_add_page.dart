@@ -555,20 +555,19 @@ class _StepByStepAddPageState extends ConsumerState<StepByStepAddPage>
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
                                             children: [
-                                              // Placeholder Image
                                               Container(
                                                 width: 120,
                                                 height: 120,
                                                 decoration: BoxDecoration(
                                                   color: Theme.of(context)
                                                       .primaryColor
-                                                      .withOpacity(0.1),
+                                                      .withValues(alpha: 0.1),
                                                   borderRadius:
                                                       BorderRadius.circular(16),
                                                   border: Border.all(
                                                     color: Theme.of(context)
                                                         .primaryColor
-                                                        .withOpacity(0.3),
+                                                        .withValues(alpha: 0.3),
                                                     width: 2,
                                                   ),
                                                 ),

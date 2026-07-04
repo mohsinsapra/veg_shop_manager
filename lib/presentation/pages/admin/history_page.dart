@@ -34,25 +34,38 @@ class HistoryPage extends ConsumerWidget {
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
               child: Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.print),
-                      label: Text(context.l10n.adminHistoryPrintAllCombined),
+                    child: FilledButton.tonalIcon(
+                      icon: const Icon(Icons.print_outlined, size: 20),
+                      label: Text(
+                        context.l10n.adminHistoryPrintAllCombined,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       onPressed: () => _printAllCombined(context, ref, cycles),
                     ),
                   ),
                   if (isAdmin) ...[
                     const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_outline),
-                      label: Text(context.l10n.adminHistoryClearAll),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        icon: const Icon(Icons.delete_outline, size: 20),
+                        label: Text(
+                          context.l10n.adminHistoryClearAll,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: FilledButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.errorContainer,
+                          foregroundColor:
+                              Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        onPressed: () => _confirmClearAll(context, ref),
                       ),
-                      onPressed: () => _confirmClearAll(context, ref),
                     ),
                   ],
                 ],
@@ -60,6 +73,7 @@ class HistoryPage extends ConsumerWidget {
             ),
             Expanded(
               child: ListView(
+                padding: const EdgeInsets.only(top: 4, bottom: 16),
                 children: [for (final c in cycles) _cycleCard(context, ref, c, isAdmin)],
               ),
             ),
@@ -71,38 +85,111 @@ class HistoryPage extends ConsumerWidget {
 
   Widget _cycleCard(
       BuildContext context, WidgetRef ref, CycleEntity c, bool isAdmin) {
-    final df =
-        DateFormat('EEE, d MMM yyyy • HH:mm', context.l10n.localeName);
+    final scheme = Theme.of(context).colorScheme;
+    final when = (c.completedAt ?? c.openedAt).toLocal();
+    final dateStr =
+        DateFormat('EEE, d MMM yyyy', context.l10n.localeName).format(when);
+    final timeStr = DateFormat('HH:mm', context.l10n.localeName).format(when);
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: ExpansionTile(
-        leading: const Icon(Icons.history),
-        title: Text(df.format((c.completedAt ?? c.openedAt).toLocal())),
-        trailing: _printMenu(context, ref, c.id, isAdmin),
-        children: [
-          FutureBuilder<List<EntryEntity>>(
-            future: ref.read(entryRepositoryProvider).getByCycle(c.id),
-            builder: (context, snap) {
-              final entries = snap.data ?? const <EntryEntity>[];
-              if (snap.connectionState == ConnectionState.waiting) {
-                return const Padding(
-                  padding: EdgeInsets.all(12),
-                  child: LinearProgressIndicator(),
-                );
-              }
-              return Column(
-                children: [
-                  for (final e in entries)
-                    ListTile(
-                      dense: true,
-                      title: Text(e.itemName),
-                      trailing: Text('${e.quantity}'),
-                    ),
-                ],
-              );
-            },
+      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      color: scheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          leading: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(Icons.receipt_long_outlined,
+                color: scheme.onPrimary, size: 24),
           ),
-        ],
+          title: Text(
+            dateStr,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.schedule, size: 14, color: scheme.outline),
+                const SizedBox(width: 4),
+                Text(
+                  timeStr,
+                  style: TextStyle(fontSize: 13, color: scheme.outline),
+                ),
+              ],
+            ),
+          ),
+          trailing: _printMenu(context, ref, c.id, isAdmin),
+          children: [
+            Consumer(
+              builder: (context, ref, _) {
+                final entriesAsync = ref.watch(cycleEntriesProvider(c.id));
+                if (entriesAsync.isLoading && !entriesAsync.hasValue) {
+                  return const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: LinearProgressIndicator(),
+                  );
+                }
+                final entries = entriesAsync.valueOrNull ?? const <EntryEntity>[];
+                return Column(
+                  children: [
+                    Divider(
+                        height: 1,
+                        color: scheme.outlineVariant.withValues(alpha: 0.4)),
+                    const SizedBox(height: 8),
+                    for (final e in entries)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                e.itemName,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: scheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                '${e.quantity}',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: scheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

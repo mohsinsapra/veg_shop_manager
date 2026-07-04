@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appName": "GreenChain",
+  "appName": "Frutas Deliciosas",
   "@appName": {
     "description": "The application brand name (not translated)."
   },
@@ -81,7 +81,7 @@
       }
     }
   },
-  "memberHomeTitle": "GreenChain — My Shop",
+  "memberHomeTitle": "Frutas Deliciosas — My Shop",
   "memberPrintTooltip": "Print",
   "memberPrintMyList": "Print my list",
   "memberPrintFullSheet": "Print full sheet",
@@ -257,7 +257,7 @@
   "adminHomeSectionMembers": "Members",
   "adminHomeSectionShops": "Shops",
   "adminHomeSectionHistory": "History",
-  "adminHomeAppBarTitle": "GreenChain — {section}",
+  "adminHomeAppBarTitle": "Frutas Deliciosas — {section}",
   "@adminHomeAppBarTitle": {
     "placeholders": {
       "section": {
@@ -334,7 +334,7 @@
   "adminShopsCodeFieldLabel": "Code (grid column, e.g. D)",
   "adminShopsCodeRequired": "Enter a code",
   "adminHistoryEmpty": "No completed lists yet.",
-  "adminHistoryPrintAllCombined": "Print all history (combined)",
+  "adminHistoryPrintAllCombined": "Print all",
   "adminHistoryPrintTooltip": "Print this list",
   "adminEntryTitle": "Add items to the list",
   "adminEntryAllShops": "All shops",
@@ -371,7 +371,7 @@
   "adminHistoryDeleteCycle": "Delete this history",
   "adminHistoryDeleteConfirmTitle": "Delete history entry?",
   "adminHistoryDeleteConfirmBody": "This history entry will be hidden and no longer appear in the list. This cannot be undone from the app.",
-  "adminHistoryClearAll": "Clear all history",
+  "adminHistoryClearAll": "Clear all",
   "adminHistoryClearAllConfirmTitle": "Clear all history?",
   "adminHistoryClearAllConfirmBody": "All completed shopping history will be hidden and no longer appear. This cannot be undone from the app.",
   "adminHistoryClearAllSuccess": "History cleared"

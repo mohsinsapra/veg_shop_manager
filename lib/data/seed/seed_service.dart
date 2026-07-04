@@ -1,4 +1,5 @@
 import '../../core/constants/app_constants.dart';
+import '../../core/constants/item_images.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import '../../domain/entities/shop_entity.dart';
 import '../../domain/entities/member_entity.dart';
@@ -47,6 +48,7 @@ class SeedService {
         category: entry.value,
         sortOrder: order,
         active: true,
+        imageUrl: ItemImages.byName[entry.key] ?? '',
       ));
       order++;
     }

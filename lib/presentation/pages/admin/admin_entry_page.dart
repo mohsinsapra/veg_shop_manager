@@ -126,17 +126,15 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     Future<void> set(CatalogItemEntity item, int q) async {
       setState(() => _local[item.id] = q);
-      final actions = ref.read(entryActionsProvider);
-      final targets = _target == allShops ? shops.map((s) => s.id) : [_target];
-      for (final shopId in targets) {
-        await actions.submitQuantity(
-          shopId: shopId,
-          itemId: item.id,
-          itemName: item.name,
-          quantity: q,
-          createdBy: memberId,
-        );
-      }
+      await ref.read(entryActionsProvider).submitQuantityToShops(
+            shopIds: _target == allShops
+                ? [for (final s in shops) s.id]
+                : [_target],
+            itemId: item.id,
+            itemName: item.name,
+            quantity: q,
+            createdBy: memberId,
+          );
     }
 
     int qtyOf(CatalogItemEntity item) => _local[item.id] ?? liveQty[item.id] ?? 0;
@@ -176,21 +174,22 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     return RefreshIndicator(
       onRefresh: () => refreshAppData(ref),
-      child: ListView(
-        children: [
-          for (final item in items)
-            ListTile(
-              dense: true,
-              title: Text(item.name),
-              trailing: EntryQtyStepper(
-                qty: qtyOf(item),
-                onDecrement:
-                    qtyOf(item) > 0 ? () => set(item, qtyOf(item) - 1) : null,
-                onIncrement: () => set(item, qtyOf(item) + 1),
-              ),
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 80),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          final q = qtyOf(item);
+          return ListTile(
+            dense: true,
+            title: Text(item.name),
+            trailing: EntryQtyStepper(
+              qty: q,
+              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onIncrement: () => set(item, q + 1),
             ),
-          const SizedBox(height: 80),
-        ],
+          );
+        },
       ),
     );
   }

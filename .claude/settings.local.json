@@ -12,7 +12,20 @@
       "Bash(rm:*)",
       "Bash(dart run:*)",
       "Bash(touch:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(flutter --version)",
+      "Bash(flutter devices *)",
+      "Bash(flutter run *)",
+      "Bash(git ls-tree *)",
+      "Bash([ -d \"$DIR/.git\" ])",
+      "Bash(git -C '/Users/muhammadmohsin/Documents/Learning/Nabeel Spain/veg_shop_manager_build' remote -v)",
+      "Bash(git -C '/Users/muhammadmohsin/Documents/Learning/Nabeel Spain/veg_shop_manager_build' branch --show-current)",
+      "Bash(git -C '/Users/muhammadmohsin/Documents/Learning/Nabeel Spain/veg_shop_manager_build' status --short)",
+      "Bash(xargs sed -i '' 's/GreenChain/Frutas Deliciosas/g')",
+      "Bash(sed -i '' 's/Frutas Deliciosas — Fruit Shop/Frutas Deliciosas — Autoservicio/g' web/index.html web/manifest.json)",
+      "Bash(sed -i '' 's/android:label=\"veg_shop_manager\"/android:label=\"Frutas Deliciosas\"/' android/app/src/main/AndroidManifest.xml)",
+      "Bash(sed -i '' 's/<string>Veg Shop Manager<\\\\/string>/<string>Frutas Deliciosas<\\\\/string>/' ios/Runner/Info.plist)",
+      "Bash(sed -i '' 's/<string>veg_shop_manager<\\\\/string>/<string>Frutas Deliciosas<\\\\/string>/' ios/Runner/Info.plist)"
     ],
     "deny": []
   }

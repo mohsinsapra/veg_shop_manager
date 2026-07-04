@@ -16,7 +16,10 @@ class LoginPage extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.eco, size: 64, color: Colors.green),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.asset('assets/icon/app_icon.png', width: 96, height: 96),
+              ),
               const SizedBox(height: 16),
               Text(context.l10n.appName, style: Theme.of(context).textTheme.headlineMedium),
               const SizedBox(height: 32),

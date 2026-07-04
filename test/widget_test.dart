@@ -28,7 +28,7 @@ void main() {
 
     await tester.pumpWidget(const ProviderScope(child: VegShopApp()));
 
-    expect(find.text('GreenChain'), findsOneWidget);
+    expect(find.text('Frutas Deliciosas'), findsOneWidget);
     expect(find.text('Multi-Shop Vegetable Stock Manager'), findsOneWidget);
     
     await Hive.close();

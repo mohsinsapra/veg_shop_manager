@@ -1,14 +1,16 @@
 class AppConstants {
-  static const String appName = 'GreenChain';
+  static const String appName = 'Frutas Deliciosas';
 
   /// The single super-admin (app owner). Only this account sees the in-app
   /// Settings screen (language + theme). Compared case-insensitively.
   static const String ownerEmail = 'mohsin.sapra@gmail.com';
   
   static const Map<String, String> predefinedShops = {
-    'shop1': 'Shop 1 - Downtown',
-    'shop2': 'Shop 2 - Mall',
-    'shop3': 'Shop 3 - Suburb',
+    'shop1': 'La Jota',
+    'shop2': 'Arrabal',
+    'shop3': 'Torrero',
+    'shop4': 'Paseo Teruel',
+    'shop5': 'Santa Isabel',
   };
 
   static const Map<String, String> shopPasswords = {

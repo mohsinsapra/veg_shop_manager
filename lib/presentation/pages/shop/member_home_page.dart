@@ -278,22 +278,22 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
 
     return RefreshIndicator(
       onRefresh: () => refreshAppData(ref),
-      child: ListView(
-        children: [
-          for (final item in items)
-            ListTile(
-              dense: true,
-              title: Text(item.name),
-              trailing: EntryQtyStepper(
-                qty: qtyByItem[item.id] ?? 0,
-                onDecrement: (qtyByItem[item.id] ?? 0) > 0
-                    ? () => set(item, (qtyByItem[item.id] ?? 0) - 1)
-                    : null,
-                onIncrement: () => set(item, (qtyByItem[item.id] ?? 0) + 1),
-              ),
+      child: ListView.builder(
+        padding: const EdgeInsets.only(bottom: 80),
+        itemCount: items.length,
+        itemBuilder: (context, i) {
+          final item = items[i];
+          final q = qtyByItem[item.id] ?? 0;
+          return ListTile(
+            dense: true,
+            title: Text(item.name),
+            trailing: EntryQtyStepper(
+              qty: q,
+              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onIncrement: () => set(item, q + 1),
             ),
-          const SizedBox(height: 80),
-        ],
+          );
+        },
       ),
     );
   }
