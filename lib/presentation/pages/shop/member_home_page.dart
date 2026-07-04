@@ -10,6 +10,7 @@ import '../../pdf/print_helpers.dart';
 import '../../providers/entry_providers.dart';
 import '../../providers/firebase_auth_provider.dart';
 import '../../providers/entry_view_mode_provider.dart';
+import '../../providers/show_item_images_provider.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/data_error_retry.dart';
 import '../../widgets/entry_item_controls.dart';
@@ -249,6 +250,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         items: items,
         qtyByItem: {for (final it in items) it.id: qtyByItem[it.id] ?? 0},
         onSet: (item, q) => set(item, q),
+        showImages: ref.watch(showItemImagesProvider),
       );
     }
 

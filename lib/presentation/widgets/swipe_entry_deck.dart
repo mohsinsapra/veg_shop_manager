@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/constants/item_images.dart';
 import '../../core/l10n/l10n_extension.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import 'entry_item_controls.dart';
@@ -11,11 +12,16 @@ class SwipeEntryDeck extends StatefulWidget {
   final List<CatalogItemEntity> items;
   final Map<String, int> qtyByItem;
   final Future<void> Function(CatalogItemEntity item, int qty) onSet;
+
+  /// When true the product photo fills the card as a background (owner
+  /// setting; defaults to text-only).
+  final bool showImages;
   const SwipeEntryDeck({
     super.key,
     required this.items,
     required this.qtyByItem,
     required this.onSet,
+    this.showImages = false,
   });
 
   @override
@@ -196,12 +202,19 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
     final active = qty > 0;
     // Overlay strength based on horizontal drag (only for the top card).
     final t = interactive ? (_drag.dx / 140).clamp(-1.0, 1.0) : 0.0;
+    final photoUrl = !widget.showImages
+        ? ''
+        : (item.imageUrl.isNotEmpty
+            ? item.imageUrl
+            : (ItemImages.byName[item.name] ?? ''));
+    final onPhoto = photoUrl.isNotEmpty;
     return LayoutBuilder(
       builder: (context, c) {
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Card(
             elevation: 4,
+            clipBehavior: Clip.antiAlias,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: active
@@ -210,6 +223,33 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
             ),
             child: Stack(
               children: [
+                // Full-card product photo with a darkening gradient so the
+                // name and controls stay readable on any picture.
+                if (onPhoto) ...[
+                  Positioned.fill(
+                    child: Image.network(
+                      photoUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stack) =>
+                          const SizedBox.shrink(),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.35),
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.55),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 Padding(
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -218,28 +258,60 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(item.category,
-                            style: TextStyle(color: Colors.grey[500])),
+                            style: TextStyle(
+                                color: onPhoto
+                                    ? Colors.white.withValues(alpha: 0.9)
+                                    : Colors.grey[500])),
                       ),
                       Expanded(
                         child: Center(
                           child: Text(
                             item.name,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                                fontSize: 30, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                              color: onPhoto ? Colors.white : null,
+                              shadows: onPhoto
+                                  ? const [
+                                      Shadow(
+                                          color: Colors.black54,
+                                          blurRadius: 12,
+                                          offset: Offset(0, 2)),
+                                    ]
+                                  : null,
+                            ),
                           ),
                         ),
                       ),
-                      EntryQtyStepper(
-                        qty: qty,
-                        onDecrement:
-                            qty > 0 ? () => widget.onSet(item, qty - 1) : null,
-                        onIncrement: () => widget.onSet(item, qty + 1),
+                      Container(
+                        padding: onPhoto
+                            ? const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 4)
+                            : EdgeInsets.zero,
+                        decoration: onPhoto
+                            ? BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.88),
+                                borderRadius: BorderRadius.circular(16),
+                              )
+                            : null,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            EntryQtyStepper(
+                              qty: qty,
+                              onDecrement: qty > 0
+                                  ? () => widget.onSet(item, qty - 1)
+                                  : null,
+                              onIncrement: () => widget.onSet(item, qty + 1),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(context.l10n.swipeDragHint,
+                                style: TextStyle(
+                                    color: Colors.grey[600], fontSize: 12)),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(context.l10n.swipeDragHint,
-                          style:
-                              TextStyle(color: Colors.grey[500], fontSize: 12)),
                     ],
                   ),
                 ),

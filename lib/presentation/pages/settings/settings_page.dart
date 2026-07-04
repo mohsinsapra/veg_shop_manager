@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/show_item_images_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 
 class SettingsPage extends ConsumerWidget {
@@ -50,6 +51,15 @@ class SettingsPage extends ConsumerWidget {
             groupValue: themeMode,
             onChanged: (v) => themeController.setThemeMode(v!),
             title: Text(context.l10n.themeSystem),
+          ),
+          const Divider(),
+          _sectionHeader(context, context.l10n.settingsDisplay),
+          SwitchListTile(
+            value: ref.watch(showItemImagesProvider),
+            onChanged: (v) =>
+                ref.read(showItemImagesProvider.notifier).set(v),
+            title: Text(context.l10n.settingsShowImages),
+            subtitle: Text(context.l10n.settingsShowImagesSubtitle),
           ),
         ],
       ),
