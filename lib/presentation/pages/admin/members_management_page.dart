@@ -82,6 +82,7 @@ class MembersManagementPage extends ConsumerWidget {
                         ? context.l10n.adminMembersEmailInvalid
                         : null,
                   ),
+                  const SizedBox(height: 12),
                   TextFormField(
                     controller: nameCtrl,
                     decoration: InputDecoration(
@@ -90,6 +91,7 @@ class MembersManagementPage extends ConsumerWidget {
                         ? context.l10n.validationEnterName
                         : null,
                   ),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<MemberRole>(
                     initialValue: role,
                     decoration: InputDecoration(

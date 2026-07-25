@@ -120,6 +120,7 @@ class CatalogManagementPage extends ConsumerWidget {
                     ? context.l10n.validationEnterName
                     : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: catCtrl,
                 decoration: InputDecoration(

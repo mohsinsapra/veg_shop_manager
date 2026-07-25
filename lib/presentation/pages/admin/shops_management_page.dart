@@ -16,28 +16,65 @@ class ShopsManagementPage extends ConsumerWidget {
       body: shopsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
-        data: (shops) => ListView(
+        data: (shops) => Column(
           children: [
-            for (final shop in shops)
-              ListTile(
-                leading: CircleAvatar(child: Text(shop.code)),
-                title: Text(shop.name),
-                subtitle: Text(context.l10n.adminShopsCodeSubtitle(shop.code)),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Switch(
-                      value: shop.active,
-                      onChanged: (v) =>
-                          ref.read(shopRepositoryProvider).setActive(shop.id, v),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.drag_indicator, size: 18, color: Colors.grey),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      context.l10n.adminShopsReorderHint,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => _showEditDialog(context, ref, shop),
-                    ),
-                  ],
-                ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.sort_by_alpha),
+                    tooltip: context.l10n.adminShopsSortAZ,
+                    onPressed: () => _sortAlphabetically(ref, shops),
+                  ),
+                ],
               ),
+            ),
+            Expanded(
+              child: ReorderableListView.builder(
+                buildDefaultDragHandles: false,
+                padding: const EdgeInsets.only(bottom: 80),
+                itemCount: shops.length,
+                onReorder: (oldIndex, newIndex) =>
+                    _reorder(ref, shops, oldIndex, newIndex),
+                itemBuilder: (context, i) {
+                  final shop = shops[i];
+                  return ListTile(
+                    key: ValueKey(shop.id),
+                    dense: true,
+                    leading: ReorderableDragStartListener(
+                      index: i,
+                      child: const Icon(Icons.drag_handle),
+                    ),
+                    title: Text(shop.name),
+                    subtitle: Text(context.l10n.adminShopsCodeSubtitle(shop.code)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Switch(
+                          value: shop.active,
+                          onChanged: (v) => ref
+                              .read(shopRepositoryProvider)
+                              .setActive(shop.id, v),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _showEditDialog(context, ref, shop),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -46,6 +83,30 @@ class ShopsManagementPage extends ConsumerWidget {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void _reorder(
+      WidgetRef ref, List<ShopEntity> shops, int oldIndex, int newIndex) {
+    if (newIndex > oldIndex) newIndex--;
+    final list = [...shops];
+    final moved = list.removeAt(oldIndex);
+    list.insert(newIndex, moved);
+    // Renormalize sortOrder to the new positions; persist only what changed.
+    final changes = <String, int>{};
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].sortOrder != i) changes[list[i].id] = i;
+    }
+    ref.read(shopRepositoryProvider).setSortOrders(changes);
+  }
+
+  void _sortAlphabetically(WidgetRef ref, List<ShopEntity> shops) {
+    final list = [...shops]
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    final changes = <String, int>{};
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].sortOrder != i) changes[list[i].id] = i;
+    }
+    ref.read(shopRepositoryProvider).setSortOrders(changes);
   }
 
   void _showEditDialog(BuildContext context, WidgetRef ref, ShopEntity? existing) {
@@ -71,6 +132,7 @@ class ShopsManagementPage extends ConsumerWidget {
                     ? context.l10n.validationEnterName
                     : null,
               ),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: codeCtrl,
                 decoration: InputDecoration(
