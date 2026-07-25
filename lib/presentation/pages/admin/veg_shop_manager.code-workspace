@@ -5,7 +5,13 @@
 		},
 		{
 			"path": "../../../../../veg_shop_manager_build"
+		},
+		{
+			"path": "../../../../../frutas-deliciosas-web"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "frutas-deliciosas-web",
+		"liveServer.settings.port": 5501
+	}
 }
