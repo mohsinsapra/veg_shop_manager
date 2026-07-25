@@ -6,7 +6,7 @@ class EntryEntity {
   final String itemId;
   final String itemName; // denormalized so history/prints stay stable
   final String shopId;
-  final int quantity;
+  final double quantity;
   final String? notes;
   final bool bought;
   final String createdBy; // member id (email)
@@ -46,7 +46,7 @@ class EntryEntity {
         itemId: map['itemId'] as String? ?? '',
         itemName: map['itemName'] as String? ?? '',
         shopId: map['shopId'] as String? ?? '',
-        quantity: (map['quantity'] as num?)?.toInt() ?? 0,
+        quantity: (map['quantity'] as num?)?.toDouble() ?? 0,
         notes: map['notes'] as String?,
         bought: map['bought'] as bool? ?? false,
         createdBy: map['createdBy'] as String? ?? '',
@@ -55,7 +55,7 @@ class EntryEntity {
             : DateTime.parse(map['createdAt'] as String).toUtc(),
       );
 
-  EntryEntity copyWith({int? quantity, String? notes, bool? bought}) => EntryEntity(
+  EntryEntity copyWith({double? quantity, String? notes, bool? bought}) => EntryEntity(
         id: id,
         cycleId: cycleId,
         itemId: itemId,

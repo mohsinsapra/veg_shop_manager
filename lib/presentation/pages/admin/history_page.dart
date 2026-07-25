@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/utils/qty_format.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/cycle_entity.dart';
@@ -173,7 +174,7 @@ class HistoryPage extends ConsumerWidget {
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
-                                '${e.quantity}',
+                                fmtQty(e.quantity),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -237,35 +238,42 @@ class HistoryPage extends ConsumerWidget {
   // can't silently no-op if the history list rebuilds mid-fetch.
 
   Future<void> _printCycleCombined(
-      BuildContext context, WidgetRef ref, String cycleId) {
+      BuildContext context, WidgetRef ref, String cycleId) async {
+    final mode = await pickGridTotalMode(context);
+    if (mode == null) return;
+    if (!context.mounted) return;
     return runPrint(context, (svc, l10n) async {
       final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
-      return _buildCombined(ref, svc, l10n, entries);
+      return _buildCombined(ref, svc, l10n, entries, mode);
     }, name: 'greenchain-history-combined.pdf');
   }
 
   Future<void> _printAllCombined(
-      BuildContext context, WidgetRef ref, List<CycleEntity> cycles) {
+      BuildContext context, WidgetRef ref, List<CycleEntity> cycles) async {
+    final mode = await pickGridTotalMode(context);
+    if (mode == null) return;
+    if (!context.mounted) return;
     return runPrint(context, (svc, l10n) async {
       final repo = ref.read(entryRepositoryProvider);
       final all = <EntryEntity>[];
       for (final c in cycles) {
         all.addAll(await repo.getByCycle(c.id));
       }
-      return _buildCombined(ref, svc, l10n, all);
+      return _buildCombined(ref, svc, l10n, all, mode);
     }, name: 'greenchain-history-all.pdf');
   }
 
   /// Builds a combined paper grid from a set of entries (summed by item+shop,
   /// so aggregating multiple cycles works).
   Future<Uint8List> _buildCombined(WidgetRef ref, ShoppingPdfService svc,
-      AppLocalizations l10n, List<EntryEntity> entries) async {
+      AppLocalizations l10n, List<EntryEntity> entries,
+      GridTotalMode totalMode) async {
     final catalog = await ref.read(catalogProvider.future);
     final shops = (await ref.read(shopsProvider.future))
         .where((s) => s.active)
         .toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final qty = <String, Map<String, int>>{};
+    final qty = <String, Map<String, double>>{};
     for (final e in entries) {
       final byShop = qty.putIfAbsent(e.itemId, () => {});
       byShop[e.shopId] = (byShop[e.shopId] ?? 0) + e.quantity;
@@ -276,6 +284,7 @@ class HistoryPage extends ConsumerWidget {
       catalog: catalog,
       qtyByItemShop: qty,
       l10n: l10n,
+      totalMode: totalMode,
     );
   }
 
@@ -289,7 +298,7 @@ class HistoryPage extends ConsumerWidget {
           orElse: () => shops.isEmpty
               ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
               : shops.first);
-      final qtyByItem = <String, int>{};
+      final qtyByItem = <String, double>{};
       for (final e in entries.where((e) => e.shopId == shopId)) {
         qtyByItem[e.itemId] = (qtyByItem[e.itemId] ?? 0) + e.quantity;
       }

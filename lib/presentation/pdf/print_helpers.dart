@@ -42,6 +42,33 @@ Future<void> printBytes(Uint8List bytes, {String name = 'greenchain.pdf'}) async
   }
 }
 
+/// Asks the user which columns a combined print should include. Returns null
+/// if the dialog is dismissed without a choice.
+Future<GridTotalMode?> pickGridTotalMode(BuildContext context) {
+  final l10n = context.l10n;
+  return showDialog<GridTotalMode>(
+    context: context,
+    builder: (context) => SimpleDialog(
+      title: Text(l10n.pdfTotalModeTitle),
+      children: [
+        SimpleDialogOption(
+          onPressed: () =>
+              Navigator.pop(context, GridTotalMode.shopsAndTotal),
+          child: Text(l10n.pdfTotalModeShopsAndTotal),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, GridTotalMode.totalOnly),
+          child: Text(l10n.pdfTotalModeTotalOnly),
+        ),
+        SimpleDialogOption(
+          onPressed: () => Navigator.pop(context, GridTotalMode.shopsOnly),
+          child: Text(l10n.pdfTotalModeShopsOnly),
+        ),
+      ],
+    ),
+  );
+}
+
 /// Runs a build+print action, surfacing any failure as a SnackBar instead of
 /// an uncaught error (font fetch, print dialog, etc.).
 Future<void> runPrint(

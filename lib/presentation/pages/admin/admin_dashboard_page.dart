@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/utils/qty_format.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
 import '../../pdf/print_helpers.dart';
@@ -56,10 +57,10 @@ class AdminDashboardPage extends ConsumerWidget {
             return sa != sb ? sa.compareTo(sb) : a.compareTo(b);
           });
 
-        final totalUnits = entries.fold<int>(0, (s, e) => s + e.quantity);
+        final totalUnits = entries.fold<double>(0, (s, e) => s + e.quantity);
         final boughtUnits = entries
             .where((e) => e.bought)
-            .fold<int>(0, (s, e) => s + e.quantity);
+            .fold<double>(0, (s, e) => s + e.quantity);
         final allBought = entries.every((e) => e.bought);
 
         return Column(
@@ -72,8 +73,8 @@ class AdminDashboardPage extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      context.l10n.adminDashboardHeaderSummary(
-                          itemNames.length, boughtUnits, totalUnits),
+                      context.l10n.adminDashboardHeaderSummary(itemNames.length,
+                          fmtQty(boughtUnits), fmtQty(totalUnits)),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -160,14 +161,17 @@ class AdminDashboardPage extends ConsumerWidget {
   }
 
   Future<void> _printCombined(BuildContext context, WidgetRef ref,
-      List<EntryEntity> entries, List<ShopEntity> shops) {
+      List<EntryEntity> entries, List<ShopEntity> shops) async {
+    final mode = await pickGridTotalMode(context);
+    if (mode == null) return;
+    if (!context.mounted) return;
     return runPrint(context, (svc, l10n) async {
       final catalog = await ref.read(catalogProvider.future);
       final loadedShops = (await ref.read(shopsProvider.future))
           .where((s) => s.active)
           .toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-      final qty = <String, Map<String, int>>{};
+      final qty = <String, Map<String, double>>{};
       for (final e in entries) {
         qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
       }
@@ -177,6 +181,7 @@ class AdminDashboardPage extends ConsumerWidget {
         catalog: catalog,
         qtyByItemShop: qty,
         l10n: l10n,
+        totalMode: mode,
       );
     }, name: 'greenchain-combined.pdf');
   }
@@ -253,7 +258,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
   @override
   Widget build(BuildContext context) {
     final rows = widget.rows;
-    final total = rows.fold<int>(0, (s, e) => s + e.quantity);
+    final total = rows.fold<double>(0, (s, e) => s + e.quantity);
     final allBought = rows.every((e) => e.bought);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -274,7 +279,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
                       allBought ? Colors.green : Colors.grey.shade200,
                   child: allBought
                       ? const Icon(Icons.check, color: Colors.white, size: 20)
-                      : Text('$total'),
+                      : Text(fmtQty(total)),
                 ),
               ),
             ),
@@ -298,7 +303,7 @@ class _ItemTileState extends ConsumerState<_ItemTile> {
                       .setBought(e.id, v ?? false),
                 ),
                 title: Text(
-                    '${widget.shopName[e.shopId] ?? e.shopId}: ${e.quantity}'),
+                    '${widget.shopName[e.shopId] ?? e.shopId}: ${fmtQty(e.quantity)}'),
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline),
                   tooltip: context.l10n.adminDashboardRemoveFromList,

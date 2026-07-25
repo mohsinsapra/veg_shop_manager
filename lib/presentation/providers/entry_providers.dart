@@ -64,7 +64,7 @@ class EntryActions {
     required String shopId,
     required String itemId,
     required String itemName,
-    required int quantity,
+    required double quantity,
     required String createdBy,
     String? notes,
   }) =>
@@ -82,7 +82,7 @@ class EntryActions {
     required List<String> shopIds,
     required String itemId,
     required String itemName,
-    required int quantity,
+    required double quantity,
     required String createdBy,
     String? notes,
   }) async {

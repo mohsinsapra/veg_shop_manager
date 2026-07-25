@@ -29,7 +29,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
   /// Local, session-only override of the number shown per item (used for the
   /// "All shops" bulk mode and for immediate feedback).
-  final Map<String, int> _local = {};
+  final Map<String, double> _local = {};
 
   @override
   Widget build(BuildContext context) {
@@ -42,12 +42,12 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     // Current quantities to prefill the grid so the admin can see what is
     // already in the list and reduce it to 0 to remove it.
-    final Map<String, int> liveQty;
+    final Map<String, double> liveQty;
     if (_target == allShops) {
       // Across all shops, show the highest quantity any shop currently needs.
       final all = ref.watch(openCycleEntriesProvider).valueOrNull ??
           const <EntryEntity>[];
-      final m = <String, int>{};
+      final m = <String, double>{};
       for (final e in all) {
         final cur = m[e.itemId] ?? 0;
         if (e.quantity > cur) m[e.itemId] = e.quantity;
@@ -118,14 +118,14 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
   }
 
   Widget _grid(BuildContext context, List<CatalogItemEntity> catalog,
-      Map<String, int> liveQty, List<ShopEntity> shops, String memberId) {
+      Map<String, double> liveQty, List<ShopEntity> shops, String memberId) {
     // Flat list in catalog (paper) order.
     final items = catalog
         .where((c) => c.active)
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    Future<void> set(CatalogItemEntity item, int q) async {
+    Future<void> set(CatalogItemEntity item, double q) async {
       setState(() => _local[item.id] = q);
       await ref.read(entryActionsProvider).submitQuantityToShops(
             shopIds: _target == allShops
@@ -138,7 +138,8 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
           );
     }
 
-    int qtyOf(CatalogItemEntity item) => _local[item.id] ?? liveQty[item.id] ?? 0;
+    double qtyOf(CatalogItemEntity item) =>
+        _local[item.id] ?? liveQty[item.id] ?? 0;
     final view = ref.watch(entryViewModeProvider);
 
     if (view == EntryViewMode.swipe) {
@@ -166,7 +167,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
             return EntryCard(
               name: item.name,
               qty: q,
-              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onDecrement: q > 0
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  : null,
               onIncrement: () => set(item, q + 1),
             );
           },
@@ -187,7 +190,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
             title: Text(item.name),
             trailing: EntryQtyStepper(
               qty: q,
-              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onDecrement: q > 0
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  : null,
               onIncrement: () => set(item, q + 1),
             ),
           );

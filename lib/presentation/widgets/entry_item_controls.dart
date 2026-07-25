@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/l10n/l10n_extension.dart';
+import '../../core/utils/qty_format.dart';
 
 /// How the entry catalog is presented.
 enum EntryViewMode { list, grid, swipe }
@@ -43,17 +45,81 @@ class EntryViewMenu extends StatelessWidget {
   }
 }
 
-/// A compact quantity stepper: − [qty] + . Used in both list and grid entry views.
-class EntryQtyStepper extends StatelessWidget {
-  final int qty;
+/// Parses a user-typed quantity: normalizes ',' to '.', clamps negatives/NaN
+/// to 0, and rounds to the nearest 0.5 step.
+double parseQty(String raw) {
+  final normalized = raw.trim().replaceAll(',', '.');
+  final v = double.tryParse(normalized);
+  if (v == null || v < 0) return 0;
+  return (v * 2).round() / 2;
+}
+
+/// A compact quantity stepper: − [qty] + . Used in both list and grid entry
+/// views. The middle control is a type-in field so members can enter a value
+/// directly; pressing "next" (or losing focus) commits it and — when a
+/// [focusNode] is supplied by the caller — hands focus to the next item.
+class EntryQtyStepper extends StatefulWidget {
+  final double qty;
   final VoidCallback? onDecrement; // null disables (qty already 0)
   final VoidCallback onIncrement;
+  final ValueChanged<double>? onQtyEntered;
+  final VoidCallback? onNext; // fired only on the keyboard "next" action
+  final FocusNode? focusNode;
+  final bool big; // larger, boxed field (swipe cards)
   const EntryQtyStepper({
     super.key,
     required this.qty,
     required this.onDecrement,
     required this.onIncrement,
+    this.onQtyEntered,
+    this.onNext,
+    this.focusNode,
+    this.big = false,
   });
+
+  @override
+  State<EntryQtyStepper> createState() => _EntryQtyStepperState();
+}
+
+class _EntryQtyStepperState extends State<EntryQtyStepper> {
+  late final TextEditingController _controller;
+  double? _lastSent;
+
+  String _textFor(double qty) => qty == 0 ? '' : fmtQty(qty);
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: _textFor(widget.qty));
+  }
+
+  @override
+  void didUpdateWidget(covariant EntryQtyStepper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.qty != widget.qty) {
+      _lastSent = widget.qty;
+      final hasFocus = widget.focusNode?.hasFocus ?? false;
+      if (!hasFocus) {
+        _controller.text = _textFor(widget.qty);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  // Commits the typed value once per change: the "next" action and the
+  // subsequent focus loss both land here, so skip when nothing changed.
+  void _commit() {
+    final q = parseQty(_controller.text);
+    _controller.text = _textFor(q);
+    if (_lastSent == q) return;
+    _lastSent = q;
+    widget.onQtyEntered?.call(q);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,20 +128,57 @@ class EntryQtyStepper extends StatelessWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.remove_circle_outline),
-          onPressed: onDecrement,
+          onPressed: widget.onDecrement,
           visualDensity: VisualDensity.compact,
         ),
         SizedBox(
-          width: 36,
-          child: Text('$qty',
+          width: widget.big ? 76 : 44,
+          child: Focus(
+            onFocusChange: (hasFocus) {
+              if (!hasFocus) _commit();
+            },
+            child: TextField(
+              controller: _controller,
+              focusNode: widget.focusNode,
               textAlign: TextAlign.center,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              textInputAction: TextInputAction.next,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}([.,]5?)?')),
+              ],
+              decoration: InputDecoration(
+                isDense: true,
+                contentPadding:
+                    EdgeInsets.symmetric(vertical: widget.big ? 10 : 8),
+                filled: true,
+                fillColor: Colors.grey.shade100,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                ),
+                hintText: '0',
+              ),
               style: TextStyle(
+                  fontSize: widget.big ? 22 : null,
                   fontWeight: FontWeight.bold,
-                  color: qty > 0 ? Colors.green[800] : Colors.grey)),
+                  color: widget.qty > 0 ? Colors.green[800] : Colors.grey),
+              // Empty onEditingComplete disables the framework's own
+              // focus traversal so onNext is the only thing moving focus.
+              onEditingComplete: () {},
+              onSubmitted: (_) {
+                _commit();
+                widget.onNext?.call();
+              },
+            ),
+          ),
         ),
         IconButton(
           icon: const Icon(Icons.add_circle_outline),
-          onPressed: onIncrement,
+          onPressed: widget.onIncrement,
           visualDensity: VisualDensity.compact,
         ),
       ],
@@ -87,15 +190,21 @@ class EntryQtyStepper extends StatelessWidget {
 /// a quantity is set.
 class EntryCard extends StatelessWidget {
   final String name;
-  final int qty;
+  final double qty;
   final VoidCallback? onDecrement;
   final VoidCallback onIncrement;
+  final ValueChanged<double>? onQtyEntered;
+  final VoidCallback? onNext;
+  final FocusNode? focusNode;
   const EntryCard({
     super.key,
     required this.name,
     required this.qty,
     required this.onDecrement,
     required this.onIncrement,
+    this.onQtyEntered,
+    this.onNext,
+    this.focusNode,
   });
 
   @override
@@ -131,6 +240,9 @@ class EntryCard extends StatelessWidget {
               qty: qty,
               onDecrement: onDecrement,
               onIncrement: onIncrement,
+              onQtyEntered: onQtyEntered,
+              onNext: onNext,
+              focusNode: focusNode,
             ),
           ],
         ),

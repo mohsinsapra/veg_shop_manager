@@ -10,8 +10,8 @@ import 'entry_item_controls.dart';
 /// you drag, shows ADD / SKIP overlays, and the next card peeks behind it.
 class SwipeEntryDeck extends StatefulWidget {
   final List<CatalogItemEntity> items;
-  final Map<String, int> qtyByItem;
-  final Future<void> Function(CatalogItemEntity item, int qty) onSet;
+  final Map<String, double> qtyByItem;
+  final Future<void> Function(CatalogItemEntity item, double qty) onSet;
 
   /// When true the product photo fills the card as a background (owner
   /// setting; defaults to text-only).
@@ -35,6 +35,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
   late final AnimationController _ctrl;
   Animation<Offset>? _anim;
   bool _addOnFinish = false;
+  final FocusNode _qtyNode = FocusNode();
 
   @override
   void initState() {
@@ -47,12 +48,27 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
       ..addStatusListener((s) {
         if (s == AnimationStatus.completed) _onAnimDone();
       });
+    _focusQty();
   }
 
   @override
   void dispose() {
     _ctrl.dispose();
+    _qtyNode.dispose();
     super.dispose();
+  }
+
+  /// Puts the top card's quantity field in focus so the member can type the
+  /// amount straight away (keyboard stays up while advancing through cards).
+  void _focusQty() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _i < widget.items.length) _qtyNode.requestFocus();
+    });
+  }
+
+  void _goTo(int index) {
+    setState(() => _i = index);
+    _focusQty();
   }
 
   void _onAnimDone() {
@@ -65,6 +81,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
         _i++;
         _drag = Offset.zero;
       });
+      _focusQty();
     } else {
       setState(() => _drag = Offset.zero);
     }
@@ -100,7 +117,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
             OutlinedButton.icon(
               icon: const Icon(Icons.replay),
               label: Text(context.l10n.swipeStartOver),
-              onPressed: () => setState(() => _i = 0),
+              onPressed: () => _goTo(0),
             ),
           ],
         ),
@@ -174,21 +191,20 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
               IconButton.filledTonal(
                 icon: const Icon(Icons.chevron_left),
                 tooltip: context.l10n.swipePrevious,
-                onPressed:
-                    _i > 0 ? () => setState(() => _i--) : null,
+                onPressed: _i > 0 ? () => _goTo(_i - 1) : null,
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.close),
                 label: Text(context.l10n.swipeSkip),
                 style: FilledButton.styleFrom(backgroundColor: Colors.blueGrey),
-                onPressed: () => setState(() => _i++),
+                onPressed: () => _goTo(_i + 1),
               ),
               FilledButton.icon(
                 icon: const Icon(Icons.check),
                 label: Text(context.l10n.swipeAdd),
                 onPressed: () {
                   if (qty == 0) widget.onSet(item, 1);
-                  setState(() => _i++);
+                  _goTo(_i + 1);
                 },
               ),
             ],
@@ -198,7 +214,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
     );
   }
 
-  Widget _cardShell(CatalogItemEntity item, int qty, {required bool interactive}) {
+  Widget _cardShell(CatalogItemEntity item, double qty, {required bool interactive}) {
     final active = qty > 0;
     // Overlay strength based on horizontal drag (only for the top card).
     final t = interactive ? (_drag.dx / 140).clamp(-1.0, 1.0) : 0.0;
@@ -299,11 +315,19 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             EntryQtyStepper(
+                              key: ValueKey(item.id),
                               qty: qty,
+                              big: true,
+                              focusNode: interactive ? _qtyNode : null,
                               onDecrement: qty > 0
-                                  ? () => widget.onSet(item, qty - 1)
+                                  ? () => widget.onSet(item,
+                                      (qty - 1).clamp(0, double.infinity).toDouble())
                                   : null,
                               onIncrement: () => widget.onSet(item, qty + 1),
+                              onQtyEntered: interactive
+                                  ? (v) => widget.onSet(item, v)
+                                  : null,
+                              onNext: interactive ? () => _goTo(_i + 1) : null,
                             ),
                             const SizedBox(height: 6),
                             Text(context.l10n.swipeDragHint,

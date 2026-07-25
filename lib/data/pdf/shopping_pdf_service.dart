@@ -3,14 +3,18 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:veg_shop_manager/l10n/app_localizations.dart';
+import '../../core/utils/qty_format.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import '../../domain/entities/shop_entity.dart';
+
+/// Which columns the combined admin grid should include.
+enum GridTotalMode { shopsAndTotal, totalOnly, shopsOnly }
 
 /// One printable line: an item and a quantity (quantity 0 = not needed).
 class PdfLine {
   final String category;
   final String itemName;
-  final int quantity;
+  final double quantity;
   const PdfLine(this.category, this.itemName, this.quantity);
 }
 
@@ -161,15 +165,21 @@ class ShoppingPdfService {
     required DateTime date,
     required List<ShopEntity> shops,
     required List<CatalogItemEntity> catalog,
-    required Map<String, Map<String, int>> qtyByItemShop, // itemId -> shopId -> qty
+    required Map<String, Map<String, double>> qtyByItemShop, // itemId -> shopId -> qty
     required AppLocalizations l10n,
+    GridTotalMode totalMode = GridTotalMode.shopsAndTotal,
   }) async {
     final activeShops = shops.where((s) => s.active).toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    final headers = [...activeShops.map((s) => s.code), 'T'];
+    final headers = switch (totalMode) {
+      GridTotalMode.shopsAndTotal => [...activeShops.map((s) => s.code), 'T'],
+      GridTotalMode.shopsOnly => [...activeShops.map((s) => s.code)],
+      GridTotalMode.totalOnly => ['T'],
+    };
     final rows = [
       for (final item in _ordered(catalog))
-        _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {}),
+        _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {},
+            totalMode),
     ];
     return _paperGrid(
       title: 'Frutas Deliciosas - ${l10n.pdfCombinedTitle}',
@@ -181,15 +191,19 @@ class ShoppingPdfService {
   }
 
   _PaperRow _buildComboRow(CatalogItemEntity item, List<ShopEntity> shops,
-      Map<String, int> perShop) {
-    var total = 0;
-    final cells = <String>[];
+      Map<String, double> perShop, GridTotalMode totalMode) {
+    var total = 0.0;
+    final shopCells = <String>[];
     for (final s in shops) {
       final q = perShop[s.id] ?? 0;
       total += q;
-      cells.add(q > 0 ? '$q' : '');
+      shopCells.add(q > 0 ? fmtQty(q) : '');
     }
-    cells.add(total > 0 ? '$total' : '');
+    final cells = switch (totalMode) {
+      GridTotalMode.shopsAndTotal => [...shopCells, total > 0 ? fmtQty(total) : ''],
+      GridTotalMode.shopsOnly => shopCells,
+      GridTotalMode.totalOnly => [total > 0 ? fmtQty(total) : ''],
+    };
     return _PaperRow(item.name, cells);
   }
 
@@ -200,13 +214,13 @@ class ShoppingPdfService {
     required String shopCode,
     required DateTime date,
     required List<CatalogItemEntity> catalog,
-    required Map<String, int> qtyByItem,
+    required Map<String, double> qtyByItem,
     required AppLocalizations l10n,
   }) async {
     final rows = [
       for (final item in _ordered(catalog))
         _PaperRow(item.name,
-            [(qtyByItem[item.id] ?? 0) > 0 ? '${qtyByItem[item.id]}' : '']),
+            [(qtyByItem[item.id] ?? 0) > 0 ? fmtQty(qtyByItem[item.id]!) : '']),
     ];
     return _paperGrid(
       title: 'Frutas Deliciosas - $shopName',
@@ -252,7 +266,7 @@ class ShoppingPdfService {
               pw.TableRow(children: [
                 pw.Padding(
                     padding: const pw.EdgeInsets.all(3),
-                    child: pw.Text('${l.quantity}')),
+                    child: pw.Text(fmtQty(l.quantity))),
                 pw.Padding(
                     padding: const pw.EdgeInsets.all(3), child: pw.Text(l.itemName)),
               ]),

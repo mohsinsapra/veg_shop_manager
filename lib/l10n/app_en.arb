@@ -277,10 +277,10 @@
         "type": "int"
       },
       "bought": {
-        "type": "int"
+        "type": "String"
       },
       "total": {
-        "type": "int"
+        "type": "String"
       }
     }
   },
@@ -336,6 +336,8 @@
   "adminShopsNameLabel": "Name",
   "adminShopsCodeFieldLabel": "Code (grid column, e.g. D)",
   "adminShopsCodeRequired": "Enter a code",
+  "adminShopsReorderHint": "Drag the handle to reorder — this order is used everywhere and on prints.",
+  "adminShopsSortAZ": "Sort A–Z by name",
   "adminHistoryEmpty": "No completed lists yet.",
   "adminHistoryPrintAllCombined": "Print all",
   "adminHistoryPrintTooltip": "Print this list",
@@ -361,6 +363,10 @@
   "pdfProductHeader": "Product",
   "pdfNothingNeeded": "Nothing needed today.",
   "pdfCombinedTitle": "Combined Shopping List",
+  "pdfTotalModeTitle": "Which columns to include?",
+  "pdfTotalModeShopsAndTotal": "Shops + total",
+  "pdfTotalModeTotalOnly": "Total only",
+  "pdfTotalModeShopsOnly": "Shops only (no total)",
   "pdfVegetables": "Vegetables",
   "pdfFruits": "Fruits",
   "printFailed": "Print failed: {error}",

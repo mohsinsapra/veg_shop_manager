@@ -28,6 +28,17 @@ class MemberHomePage extends ConsumerStatefulWidget {
 class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   String? _shopId;
   String _search = '';
+  final Map<String, FocusNode> _qtyFocus = {};
+
+  FocusNode _focusFor(String id) => _qtyFocus.putIfAbsent(id, FocusNode.new);
+
+  @override
+  void dispose() {
+    for (final node in _qtyFocus.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +137,12 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   Future<void> _print(String mode) async {
     final shopId = _shopId;
     if (shopId == null) return;
+    GridTotalMode? totalMode;
+    if (mode == 'combined') {
+      totalMode = await pickGridTotalMode(context);
+      if (totalMode == null) return;
+    }
+    if (!mounted) return;
     // Data-fetching happens inside runPrint so it can't silently no-op, and on
     // mobile the PDF is shared via the OS sheet.
     await runPrint(context, (svc, l10n) async {
@@ -145,7 +162,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             .toList()
           ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
         final allEntries = await ref.read(openCycleEntriesProvider.future);
-        final qty = <String, Map<String, int>>{};
+        final qty = <String, Map<String, double>>{};
         for (final e in allEntries.where((e) => myShopIds.contains(e.shopId))) {
           (qty[e.itemId] ??= {})[e.shopId] = e.quantity;
         }
@@ -155,6 +172,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
           catalog: catalog,
           qtyByItemShop: qty,
           l10n: l10n,
+          totalMode: totalMode!,
         );
       }
 
@@ -235,7 +253,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    Future<void> set(CatalogItemEntity item, int q) =>
+    Future<void> set(CatalogItemEntity item, double q) =>
         ref.read(entryActionsProvider).submitQuantity(
               shopId: shop.id,
               itemId: item.id,
@@ -243,6 +261,18 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               quantity: q,
               createdBy: memberId,
             );
+
+    void focusNext(String currentItemId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final i = items.indexWhere((it) => it.id == currentItemId);
+        if (i == -1) return;
+        if (i + 1 < items.length) {
+          _qtyFocus[items[i + 1].id]?.requestFocus();
+        } else {
+          _qtyFocus[currentItemId]?.unfocus();
+        }
+      });
+    }
 
     final view = ref.watch(entryViewModeProvider);
     if (view == EntryViewMode.swipe) {
@@ -270,8 +300,13 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             return EntryCard(
               name: item.name,
               qty: q,
-              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onDecrement: q > 0
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  : null,
               onIncrement: () => set(item, q + 1),
+              focusNode: _focusFor(item.id),
+              onQtyEntered: (v) => set(item, v),
+              onNext: () => focusNext(item.id),
             );
           },
         ),
@@ -291,8 +326,13 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             title: Text(item.name),
             trailing: EntryQtyStepper(
               qty: q,
-              onDecrement: q > 0 ? () => set(item, q - 1) : null,
+              onDecrement: q > 0
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  : null,
               onIncrement: () => set(item, q + 1),
+              focusNode: _focusFor(item.id),
+              onQtyEntered: (v) => set(item, v),
+              onNext: () => focusNext(item.id),
             ),
           );
         },
