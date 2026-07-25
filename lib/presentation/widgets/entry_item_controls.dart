@@ -125,6 +125,17 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
     super.dispose();
   }
 
+  // A physical Enter key and the soft keyboard's "next" action can both fire
+  // for one keypress (desktop/web); advance at most once per frame.
+  bool _nextFired = false;
+  void _fireNext() {
+    if (_nextFired) return;
+    _nextFired = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _nextFired = false);
+    _commit();
+    widget.onNext?.call();
+  }
+
   // Commits the typed value once per change: the "next" action and the
   // subsequent focus loss both land here, so skip when nothing changed.
   void _commit() {
@@ -150,6 +161,17 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
           child: Focus(
             onFocusChange: (hasFocus) {
               if (!hasFocus) _commit();
+            },
+            // Physical Enter (desktop/web) doesn't reach onSubmitted on every
+            // platform; catch it here so the flow works on a computer too.
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  (event.logicalKey == LogicalKeyboardKey.enter ||
+                      event.logicalKey == LogicalKeyboardKey.numpadEnter)) {
+                _fireNext();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
             },
             child: TextField(
               controller: _controller,
@@ -183,10 +205,7 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
               // Empty onEditingComplete disables the framework's own
               // focus traversal so onNext is the only thing moving focus.
               onEditingComplete: () {},
-              onSubmitted: (_) {
-                _commit();
-                widget.onNext?.call();
-              },
+              onSubmitted: (_) => _fireNext(),
             ),
           ),
         ),
