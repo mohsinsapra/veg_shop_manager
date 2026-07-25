@@ -35,7 +35,14 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
   late final AnimationController _ctrl;
   Animation<Offset>? _anim;
   bool _addOnFinish = false;
-  final FocusNode _qtyNode = FocusNode();
+
+  // One focus node per item: focus must genuinely MOVE between nodes when the
+  // deck advances — re-requesting an already-focused shared node is a no-op,
+  // which on web leaves the fresh TextField without a text input connection
+  // (typed characters vanish while raw keys still arrive).
+  final Map<String, FocusNode> _qtyFocus = {};
+
+  FocusNode _focusFor(String id) => _qtyFocus.putIfAbsent(id, FocusNode.new);
 
   @override
   void initState() {
@@ -54,7 +61,9 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
   @override
   void dispose() {
     _ctrl.dispose();
-    _qtyNode.dispose();
+    for (final node in _qtyFocus.values) {
+      node.dispose();
+    }
     super.dispose();
   }
 
@@ -62,7 +71,9 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
   /// amount straight away (keyboard stays up while advancing through cards).
   void _focusQty() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _i < widget.items.length) _qtyNode.requestFocus();
+      if (mounted && _i < widget.items.length) {
+        _focusFor(widget.items[_i].id).requestFocus();
+      }
     });
   }
 
@@ -318,7 +329,7 @@ class _SwipeEntryDeckState extends State<SwipeEntryDeck>
                               key: ValueKey(item.id),
                               qty: qty,
                               big: true,
-                              focusNode: interactive ? _qtyNode : null,
+                              focusNode: interactive ? _focusFor(item.id) : null,
                               onDecrement: qty > 0
                                   ? () => widget.onSet(item,
                                       (qty - 1).clamp(0, double.infinity).toDouble())
