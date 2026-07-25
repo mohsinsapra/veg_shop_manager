@@ -91,11 +91,24 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: _textFor(widget.qty));
+    widget.focusNode?.addListener(_onFocusGained);
+  }
+
+  // Select the whole value on focus so typing replaces it (keyboard flow).
+  void _onFocusGained() {
+    if (widget.focusNode?.hasFocus ?? false) {
+      _controller.selection =
+          TextSelection(baseOffset: 0, extentOffset: _controller.text.length);
+    }
   }
 
   @override
   void didUpdateWidget(covariant EntryQtyStepper oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.focusNode != widget.focusNode) {
+      oldWidget.focusNode?.removeListener(_onFocusGained);
+      widget.focusNode?.addListener(_onFocusGained);
+    }
     if (oldWidget.qty != widget.qty) {
       _lastSent = widget.qty;
       final hasFocus = widget.focusNode?.hasFocus ?? false;
@@ -107,6 +120,7 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
 
   @override
   void dispose() {
+    widget.focusNode?.removeListener(_onFocusGained);
     _controller.dispose();
     super.dispose();
   }

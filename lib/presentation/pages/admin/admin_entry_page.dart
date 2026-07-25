@@ -30,6 +30,17 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
   /// Local, session-only override of the number shown per item (used for the
   /// "All shops" bulk mode and for immediate feedback).
   final Map<String, double> _local = {};
+  final Map<String, FocusNode> _qtyFocus = {};
+
+  FocusNode _focusFor(String id) => _qtyFocus.putIfAbsent(id, FocusNode.new);
+
+  @override
+  void dispose() {
+    for (final node in _qtyFocus.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -140,6 +151,19 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
 
     double qtyOf(CatalogItemEntity item) =>
         _local[item.id] ?? liveQty[item.id] ?? 0;
+
+    void focusNext(String currentItemId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final i = items.indexWhere((it) => it.id == currentItemId);
+        if (i == -1) return;
+        if (i + 1 < items.length) {
+          _qtyFocus[items[i + 1].id]?.requestFocus();
+        } else {
+          _qtyFocus[currentItemId]?.unfocus();
+        }
+      });
+    }
+
     final view = ref.watch(entryViewModeProvider);
 
     if (view == EntryViewMode.swipe) {
@@ -171,6 +195,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
                   ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
                   : null,
               onIncrement: () => set(item, q + 1),
+              focusNode: _focusFor(item.id),
+              onQtyEntered: (v) => set(item, v),
+              onNext: () => focusNext(item.id),
             );
           },
         ),
@@ -194,6 +221,9 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
                   ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
                   : null,
               onIncrement: () => set(item, q + 1),
+              focusNode: _focusFor(item.id),
+              onQtyEntered: (v) => set(item, v),
+              onNext: () => focusNext(item.id),
             ),
           );
         },
