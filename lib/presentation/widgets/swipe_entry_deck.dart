@@ -232,8 +232,10 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
         // Visibility (not `if`) so the Column's child list never changes
         // length: removing children re-slots the Expanded card area, which
         // rebuilds the focused qty field and closes the keyboard in a loop.
+        // On mobile the keypad's nav strip already shows the position, so the
+        // progress row is desktop-only — the card gets the extra height.
         Visibility(
-          visible: !widget.compact,
+          visible: !widget.compact && !_isMobile,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
             child: Row(
