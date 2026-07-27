@@ -374,12 +374,45 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
             visible: !widget.compact,
             child: SafeArea(
               top: false,
-              child: _QtyKeypad(
-                onDigit: _keyDigit,
-                onComma: _keyComma,
-                onBackspace: _keyBackspace,
-                onSkip: _keySkip,
-                onEnter: _keyEnter,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Prev / next navigation strip above the keypad.
+                  Container(
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
+                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 0),
+                    child: Row(
+                      children: [
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.chevron_left),
+                          tooltip: context.l10n.swipePrevious,
+                          onPressed: _i > 0 ? () => _goTo(_i - 1) : null,
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${_i + 1} / ${items.length}',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        IconButton.filledTonal(
+                          icon: const Icon(Icons.chevron_right),
+                          onPressed: () => _goTo(_i + 1),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _QtyKeypad(
+                    onDigit: _keyDigit,
+                    onComma: _keyComma,
+                    onBackspace: _keyBackspace,
+                    onSkip: _keySkip,
+                    onEnter: _keyEnter,
+                  ),
+                ],
               ),
             ),
           ),
