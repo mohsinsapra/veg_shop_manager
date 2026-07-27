@@ -13,10 +13,10 @@ class EntryViewMenu extends StatelessWidget {
   const EntryViewMenu({super.key, required this.mode, required this.onChanged});
 
   IconData _icon(EntryViewMode m) => switch (m) {
-        EntryViewMode.list => Icons.view_list,
-        EntryViewMode.grid => Icons.grid_view,
-        EntryViewMode.swipe => Icons.style,
-      };
+    EntryViewMode.list => Icons.view_list,
+    EntryViewMode.grid => Icons.grid_view,
+    EntryViewMode.swipe => Icons.style,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +28,23 @@ class EntryViewMenu extends StatelessWidget {
         for (final m in EntryViewMode.values)
           PopupMenuItem(
             value: m,
-            child: Row(children: [
-              Icon(_icon(m),
+            child: Row(
+              children: [
+                Icon(
+                  _icon(m),
                   size: 20,
-                  color: m == mode ? Theme.of(context).colorScheme.primary : null),
-              const SizedBox(width: 12),
-              Text(switch (m) {
-                EntryViewMode.list => context.l10n.entryControlsList,
-                EntryViewMode.grid => context.l10n.entryControlsGrid,
-                EntryViewMode.swipe => context.l10n.entryControlsSwipe,
-              }),
-            ]),
+                  color: m == mode
+                      ? Theme.of(context).colorScheme.primary
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Text(switch (m) {
+                  EntryViewMode.list => context.l10n.entryControlsList,
+                  EntryViewMode.grid => context.l10n.entryControlsGrid,
+                  EntryViewMode.swipe => context.l10n.entryControlsSwipe,
+                }),
+              ],
+            ),
           ),
       ],
     );
@@ -66,6 +72,8 @@ class EntryQtyStepper extends StatefulWidget {
   final VoidCallback? onNext; // fired only on the keyboard "next" action
   final FocusNode? focusNode;
   final bool big; // larger, boxed field (swipe cards)
+  final TextEditingController? controller;
+  final bool readOnly;
   const EntryQtyStepper({
     super.key,
     required this.qty,
@@ -75,6 +83,8 @@ class EntryQtyStepper extends StatefulWidget {
     this.onNext,
     this.focusNode,
     this.big = false,
+    this.controller,
+    this.readOnly = false,
   });
 
   @override
@@ -82,7 +92,7 @@ class EntryQtyStepper extends StatefulWidget {
 }
 
 class _EntryQtyStepperState extends State<EntryQtyStepper> {
-  late final TextEditingController _controller;
+  late TextEditingController _controller;
   double? _lastSent;
 
   String _textFor(double qty) => qty == 0 ? '' : fmtQty(qty);
@@ -90,15 +100,18 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: _textFor(widget.qty));
+    _controller = widget.controller ?? TextEditingController();
+    _controller.text = _textFor(widget.qty);
     widget.focusNode?.addListener(_onFocusGained);
   }
 
   // Select the whole value on focus so typing replaces it (keyboard flow).
   void _onFocusGained() {
     if (widget.focusNode?.hasFocus ?? false) {
-      _controller.selection =
-          TextSelection(baseOffset: 0, extentOffset: _controller.text.length);
+      _controller.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
     }
   }
 
@@ -121,7 +134,7 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
   @override
   void dispose() {
     widget.focusNode?.removeListener(_onFocusGained);
-    _controller.dispose();
+    if (widget.controller == null) _controller.dispose();
     super.dispose();
   }
 
@@ -151,10 +164,14 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: widget.onDecrement,
-          visualDensity: VisualDensity.compact,
+        // ExcludeFocus on the +/- buttons keeps focus (and the soft keyboard)
+        // on the text field when they are tapped mid-typing.
+        ExcludeFocus(
+          child: IconButton(
+            icon: const Icon(Icons.remove_circle_outline),
+            onPressed: widget.onDecrement,
+            visualDensity: VisualDensity.compact,
+          ),
         ),
         SizedBox(
           width: widget.big ? 76 : 44,
@@ -176,16 +193,20 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
             child: TextField(
               controller: _controller,
               focusNode: widget.focusNode,
+              readOnly: widget.readOnly,
               textAlign: TextAlign.center,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               textInputAction: TextInputAction.next,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d{0,3}([.,]5?)?')),
               ],
               decoration: InputDecoration(
                 isDense: true,
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: widget.big ? 10 : 8),
+                contentPadding: EdgeInsets.symmetric(
+                  vertical: widget.big ? 10 : 8,
+                ),
                 filled: true,
                 fillColor: Colors.grey.shade100,
                 border: OutlineInputBorder(
@@ -199,9 +220,10 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
                 hintText: '0',
               ),
               style: TextStyle(
-                  fontSize: widget.big ? 22 : null,
-                  fontWeight: FontWeight.bold,
-                  color: widget.qty > 0 ? Colors.green[800] : Colors.grey),
+                fontSize: widget.big ? 22 : null,
+                fontWeight: FontWeight.bold,
+                color: widget.qty > 0 ? Colors.green[800] : Colors.grey,
+              ),
               // Empty onEditingComplete disables the framework's own
               // focus traversal so onNext is the only thing moving focus.
               onEditingComplete: () {},
@@ -209,10 +231,12 @@ class _EntryQtyStepperState extends State<EntryQtyStepper> {
             ),
           ),
         ),
-        IconButton(
-          icon: const Icon(Icons.add_circle_outline),
-          onPressed: widget.onIncrement,
-          visualDensity: VisualDensity.compact,
+        ExcludeFocus(
+          child: IconButton(
+            icon: const Icon(Icons.add_circle_outline),
+            onPressed: widget.onIncrement,
+            visualDensity: VisualDensity.compact,
+          ),
         ),
       ],
     );
