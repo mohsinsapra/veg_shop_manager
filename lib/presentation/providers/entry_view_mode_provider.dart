@@ -6,7 +6,7 @@ import '../widgets/entry_item_controls.dart';
 /// on this device, so the user's last choice is restored next time they add
 /// items.
 class EntryViewModeController extends StateNotifier<EntryViewMode> {
-  EntryViewModeController() : super(EntryViewMode.list) {
+  EntryViewModeController() : super(EntryViewMode.swipe) {
     _load();
   }
 
@@ -18,7 +18,7 @@ class EntryViewModeController extends StateNotifier<EntryViewMode> {
     if (saved != null) {
       state = EntryViewMode.values.firstWhere(
         (m) => m.name == saved,
-        orElse: () => EntryViewMode.list,
+        orElse: () => EntryViewMode.swipe,
       );
     }
   }
