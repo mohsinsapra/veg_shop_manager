@@ -185,4 +185,36 @@ void main() {
       debugDefaultTargetPlatformOverride = null;
     }
   });
+
+  testWidgets('mobile right-swipe with no typed qty advances WITHOUT adding', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    try {
+      final set = <String, double>{};
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SwipeEntryDeck(
+              items: items,
+              qtyByItem: const {},
+              onSet: (item, q) async => set[item.id] = q,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Fling the top card well past the fly-off threshold, to the right.
+      await tester.drag(find.text('Tomate').first, const Offset(600, 0));
+      await tester.pumpAndSettle();
+
+      expect(set, isEmpty, reason: 'right-swipe with no qty must not add');
+      expect(find.text('Manzana'), findsWidgets, reason: 'deck advanced');
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
 }

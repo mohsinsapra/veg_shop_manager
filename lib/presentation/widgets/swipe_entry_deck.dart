@@ -135,7 +135,13 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     if (flew) {
       final item = widget.items[_i];
       final qty = widget.qtyByItem[item.id] ?? 0;
-      if (_addOnFinish && qty == 0) widget.onSet(item, 1);
+      // A right-swipe commits a TYPED quantity but never auto-adds 1: people
+      // swipe right just to move on, and phantom 1-unit entries piled up.
+      // Adds happen only via a typed qty, the + stepper, or search-select.
+      if (_addOnFinish && _isMobile) {
+        final typed = parseQty(_kbCtrl.text);
+        if (typed > 0 && typed != qty) widget.onSet(item, typed);
+      }
       setState(() {
         _i++;
         _drag = Offset.zero;
@@ -197,7 +203,7 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     final current = widget.qtyByItem[item.id] ?? 0;
     // Enter only commits a typed quantity; with nothing (or 0) typed it just
     // advances — most cards are skipped, so zero must NOT add the item.
-    // Deliberate adds without typing use the Añadir button or a right-swipe.
+    // Adding without typing happens only via the + stepper or search-select.
     if (q > 0 && q != current) widget.onSet(item, q);
     _goTo(_i + 1);
   }
@@ -320,10 +326,9 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
                   FilledButton.icon(
                     icon: const Icon(Icons.check),
                     label: Text(context.l10n.swipeAdd),
-                    onPressed: () {
-                      if (qty == 0) widget.onSet(item, 1);
-                      _goTo(_i + 1);
-                    },
+                    // Advance only — a typed qty is committed by the field;
+                    // zero must never silently add 1.
+                    onPressed: () => _goTo(_i + 1),
                   ),
                 ],
               ),
@@ -359,10 +364,7 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
                     child: FilledButton.icon(
                       icon: const Icon(Icons.keyboard_return),
                       label: Text(context.l10n.swipeAdd),
-                      onPressed: () {
-                        if (qty == 0) widget.onSet(item, 1);
-                        _goTo(_i + 1);
-                      },
+                      onPressed: () => _goTo(_i + 1),
                     ),
                   ),
                 ],
