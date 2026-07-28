@@ -55,7 +55,9 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
   // Mobile (incl. mobile browsers) gets a custom in-app numeric keypad
   // instead of the system keyboard: no focus node is ever requested, and the
   // qty field is fed by a controller the keypad keys mutate directly.
-  static final bool _isMobile =
+  // A getter (not static final) so tests can steer it through
+  // debugDefaultTargetPlatformOverride.
+  bool get _isMobile =>
       defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.android;
   final _kbCtrl = TextEditingController();

@@ -139,23 +139,24 @@ class ShoppingPdfService {
     }
 
     final doc = _doc();
-    doc.addPage(pw.Page(
+    // MultiPage, not Page: a single fixed page silently DROPS the whole table
+    // when it grows past one A4 (more catalog items / wrapped names), printing
+    // just the title. MultiPage keeps one page when it fits and flows extra
+    // rows onto a second page when it doesn't.
+    doc.addPage(pw.MultiPage(
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(12),
-      build: (context) => pw.Column(
-        crossAxisAlignment: pw.CrossAxisAlignment.start,
-        children: [
-          pw.Text(title,
-              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-          pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 8)),
-          pw.SizedBox(height: 4),
-          pw.Table(
-            border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey700),
-            columnWidths: widths,
-            children: tableRows,
-          ),
-        ],
-      ),
+      build: (context) => [
+        pw.Text(title,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+        pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 8)),
+        pw.SizedBox(height: 4),
+        pw.Table(
+          border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey700),
+          columnWidths: widths,
+          children: tableRows,
+        ),
+      ],
     ));
     return doc.save();
   }
