@@ -329,7 +329,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
                 leading: const Icon(Icons.search, size: 18),
                 title: Text(it.name),
                 onTap: () {
-                  _deckKey.currentState?.jumpToItem(it.id, activate: true);
+                  _deckKey.currentState?.jumpToItem(it.id);
                   _searchCtrl.clear();
                   // Close the search keyboard so the selected card is visible
                   // right away (on mobile the custom keypad takes over; on

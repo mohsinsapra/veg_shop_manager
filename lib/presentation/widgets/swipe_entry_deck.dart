@@ -111,15 +111,11 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
   }
 
   /// Jumps directly to the card for [id] (used when the admin taps a search
-  /// suggestion). No-op if the item isn't in the current deck.
-  void jumpToItem(String id, {bool activate = false}) {
+  /// suggestion). Only navigates — the item stays at 0 until a quantity is
+  /// typed; nothing is ever added implicitly.
+  void jumpToItem(String id) {
     final idx = widget.items.indexWhere((it) => it.id == id);
     if (idx == -1) return;
-    // When picked from search the intent is clearly "I need this item": put
-    // it on the list right away so the card lights up as active.
-    if (activate && (widget.qtyByItem[id] ?? 0) == 0) {
-      widget.onSet(widget.items[idx], 1);
-    }
     _ctrl.stop();
     _anim = null;
     setState(() {
