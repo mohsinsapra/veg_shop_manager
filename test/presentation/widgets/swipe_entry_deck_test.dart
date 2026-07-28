@@ -147,4 +147,42 @@ void main() {
       );
     }),
   );
+
+  testWidgets('mobile keypad enter with no value advances WITHOUT adding', (
+    tester,
+  ) async {
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    try {
+      final set = <String, double>{};
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SwipeEntryDeck(
+              items: items,
+              qtyByItem: const {},
+              onSet: (item, q) async => set[item.id] = q,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Enter with an empty quantity: card advances, nothing is added.
+      await tester.tap(find.byIcon(Icons.keyboard_return));
+      await tester.pumpAndSettle();
+      expect(set, isEmpty, reason: 'zero/empty enter must not add the item');
+      expect(find.text('Manzana'), findsWidgets);
+
+      // Typing a quantity on the keypad and pressing enter DOES add it.
+      await tester.tap(find.text('3').last); // keypad digit key
+      await tester.tap(find.byIcon(Icons.keyboard_return));
+      await tester.pumpAndSettle();
+      expect(set['b'], 3);
+      expect(find.text('Pera'), findsWidgets);
+    } finally {
+      debugDefaultTargetPlatformOverride = null;
+    }
+  });
 }

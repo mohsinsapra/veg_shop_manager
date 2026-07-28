@@ -195,11 +195,10 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     final item = widget.items[_i];
     final q = parseQty(_kbCtrl.text);
     final current = widget.qtyByItem[item.id] ?? 0;
-    if (q > 0) {
-      if (q != current) widget.onSet(item, q);
-    } else if (current == 0) {
-      widget.onSet(item, 1);
-    }
+    // Enter only commits a typed quantity; with nothing (or 0) typed it just
+    // advances — most cards are skipped, so zero must NOT add the item.
+    // Deliberate adds without typing use the Añadir button or a right-swipe.
+    if (q > 0 && q != current) widget.onSet(item, q);
     _goTo(_i + 1);
   }
 
