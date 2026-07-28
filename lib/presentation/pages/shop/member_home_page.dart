@@ -59,24 +59,32 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             tooltip: context.l10n.memberPrintTooltip,
             onSelected: _print,
             itemBuilder: (context) {
-              final multi = (ref.read(authControllerProvider).member?.shopIds
-                          .length ??
+              final multi =
+                  (ref.read(authControllerProvider).member?.shopIds.length ??
                       0) >
                   1;
               return [
-                PopupMenuItem(value: 'compact', child: Text(context.l10n.memberPrintMyList)),
-                PopupMenuItem(value: 'sheet', child: Text(context.l10n.memberPrintFullSheet)),
+                PopupMenuItem(
+                  value: 'compact',
+                  child: Text(context.l10n.memberPrintMyList),
+                ),
+                PopupMenuItem(
+                  value: 'sheet',
+                  child: Text(context.l10n.memberPrintFullSheet),
+                ),
                 if (multi)
                   PopupMenuItem(
-                      value: 'combined',
-                      child: Text(context.l10n.memberPrintCombined)),
+                    value: 'combined',
+                    child: Text(context.l10n.memberPrintCombined),
+                  ),
               ];
             },
           ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: context.l10n.logoutTooltip,
-            onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+            onPressed: () =>
+                ref.read(authControllerProvider.notifier).signOut(),
           ),
         ],
       ),
@@ -100,15 +108,20 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             );
           }
           _shopId ??= myShops.first.id;
-          final activeShop = myShops.firstWhere((s) => s.id == _shopId,
-              orElse: () => myShops.first);
+          final activeShop = myShops.firstWhere(
+            (s) => s.id == _shopId,
+            orElse: () => myShops.first,
+          );
 
           return Column(
             children: [
               _dateBanner(context),
               _shopSelector(myShops),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: TextField(
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.search),
@@ -116,13 +129,16 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
                     isDense: true,
                     border: const OutlineInputBorder(),
                   ),
-                  onChanged: (v) => setState(() => _search = v.trim().toLowerCase()),
+                  onChanged: (v) =>
+                      setState(() => _search = v.trim().toLowerCase()),
                 ),
               ),
               Expanded(
                 child: catalogAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) =>
+                      DataErrorRetry(onRetry: () => refreshAppData(ref)),
                   data: (catalog) =>
                       _grid(context, activeShop, catalog, member?.id ?? ''),
                 ),
@@ -148,19 +164,26 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     await runPrint(context, (svc, l10n) async {
       final catalog = await ref.read(catalogProvider.future);
       final shops = await ref.read(shopsProvider.future);
-      final shop = shops.firstWhere((s) => s.id == shopId,
-          orElse: () => shops.isEmpty
-              ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
-              : shops.first);
+      final shop = shops.firstWhere(
+        (s) => s.id == shopId,
+        orElse: () => shops.isEmpty
+            ? const ShopEntity(
+                id: '',
+                name: 'Shop',
+                code: '',
+                sortOrder: 0,
+                active: true,
+              )
+            : shops.first,
+      );
 
       if (mode == 'combined') {
         // Combined grid of every shop this member has access to.
         final member = ref.read(authControllerProvider).member;
         final myShopIds = member?.shopIds ?? const <String>[];
-        final myShops = shops
-            .where((s) => s.active && myShopIds.contains(s.id))
-            .toList()
-          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+        final myShops =
+            shops.where((s) => s.active && myShopIds.contains(s.id)).toList()
+              ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
         final allEntries = await ref.read(openCycleEntriesProvider.future);
         final qty = <String, Map<String, double>>{};
         for (final e in allEntries.where((e) => myShopIds.contains(e.shopId))) {
@@ -221,8 +244,10 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   Widget _dateBanner(BuildContext context) {
     final cycle = ref.watch(openCycleProvider).valueOrNull;
     final date = cycle?.openedAt.toLocal() ?? DateTime.now();
-    final formattedDate =
-        DateFormat('EEE, d MMM yyyy', context.l10n.localeName).format(date);
+    final formattedDate = DateFormat(
+      'EEE, d MMM yyyy',
+      context.l10n.localeName,
+    ).format(date);
     final label = cycle == null
         ? context.l10n.memberNewListLabel(formattedDate)
         : context.l10n.memberListForLabel(formattedDate);
@@ -240,9 +265,14 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     );
   }
 
-  Widget _grid(BuildContext context, ShopEntity shop,
-      List<CatalogItemEntity> catalog, String memberId) {
-    final entries = ref.watch(shopEntriesProvider(shop.id)).valueOrNull ??
+  Widget _grid(
+    BuildContext context,
+    ShopEntity shop,
+    List<CatalogItemEntity> catalog,
+    String memberId,
+  ) {
+    final entries =
+        ref.watch(shopEntriesProvider(shop.id)).valueOrNull ??
         const <EntryEntity>[];
     final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
 
@@ -253,14 +283,15 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    Future<void> set(CatalogItemEntity item, double q) =>
-        ref.read(entryActionsProvider).submitQuantity(
-              shopId: shop.id,
-              itemId: item.id,
-              itemName: item.name,
-              quantity: q,
-              createdBy: memberId,
-            );
+    Future<void> set(CatalogItemEntity item, double q) => ref
+        .read(entryActionsProvider)
+        .submitQuantity(
+          shopId: shop.id,
+          itemId: item.id,
+          itemName: item.name,
+          quantity: q,
+          createdBy: memberId,
+        );
 
     void focusNext(String currentItemId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -280,7 +311,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         items: items,
         qtyByItem: {for (final it in items) it.id: qtyByItem[it.id] ?? 0},
         onSet: (item, q) => set(item, q),
-        showImages: ref.watch(showItemImagesProvider),
+        showImages: ref.watch(showItemImagesProvider).valueOrNull ?? false,
       );
     }
 
@@ -301,7 +332,8 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               name: item.name,
               qty: q,
               onDecrement: q > 0
-                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  ? () =>
+                        set(item, (q - 1).clamp(0, double.infinity).toDouble())
                   : null,
               onIncrement: () => set(item, q + 1),
               focusNode: _focusFor(item.id),
@@ -327,7 +359,8 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
             trailing: EntryQtyStepper(
               qty: q,
               onDecrement: q > 0
-                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  ? () =>
+                        set(item, (q - 1).clamp(0, double.infinity).toDouble())
                   : null,
               onIncrement: () => set(item, q + 1),
               focusNode: _focusFor(item.id),

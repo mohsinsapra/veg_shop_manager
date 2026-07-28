@@ -137,6 +137,7 @@
   "adminCatalogNameLabel": "Nombre",
   "adminCatalogCategoryLabel": "Categoría",
   "adminCatalogCategoryRequired": "Introduce una categoría",
+  "catalogImageUrlLabel": "URL de imagen (opcional)",
   "adminMembersShopsCount": "{count, plural, =1{• 1 tienda} other{• {count} tiendas}}",
   "adminMembersAddTitle": "Añadir miembro",
   "adminMembersEditTitle": "Editar miembro",

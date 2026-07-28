@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/shop_repository.dart';
 import '../../data/repositories/catalog_repository.dart';
+import '../../data/repositories/settings_repository.dart';
 import '../../domain/entities/shop_entity.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import '../../domain/entities/member_entity.dart';
@@ -13,6 +14,10 @@ final shopRepositoryProvider = Provider<ShopRepository>((ref) {
 
 final catalogRepositoryProvider = Provider<CatalogRepository>((ref) {
   return CatalogRepository(ref.watch(firestoreRefsProvider));
+});
+
+final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
+  return SettingsRepository(ref.watch(firestoreRefsProvider));
 });
 
 final shopsProvider = StreamProvider<List<ShopEntity>>((ref) {

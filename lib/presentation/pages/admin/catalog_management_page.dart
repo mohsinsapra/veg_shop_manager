@@ -23,12 +23,19 @@ class CatalogManagementPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                 child: Row(
                   children: [
-                    const Icon(Icons.drag_indicator, size: 18, color: Colors.grey),
+                    const Icon(
+                      Icons.drag_indicator,
+                      size: 18,
+                      color: Colors.grey,
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         context.l10n.adminCatalogReorderHint,
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ],
@@ -48,7 +55,28 @@ class CatalogManagementPage extends ConsumerWidget {
                       dense: true,
                       leading: ReorderableDragStartListener(
                         index: i,
-                        child: const Icon(Icons.drag_handle),
+                        child: item.imageUrl.isEmpty
+                            ? const Icon(Icons.drag_handle)
+                            : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.drag_handle),
+                                  const SizedBox(width: 6),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: Image.network(
+                                      item.imageUrl,
+                                      width: 24,
+                                      height: 24,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.broken_image,
+                                        size: 24,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                       ),
                       title: Text(item.name),
                       subtitle: Text(item.category),
@@ -63,7 +91,8 @@ class CatalogManagementPage extends ConsumerWidget {
                           ),
                           IconButton(
                             icon: const Icon(Icons.edit),
-                            onPressed: () => _showEditDialog(context, ref, item),
+                            onPressed: () =>
+                                _showEditDialog(context, ref, item),
                           ),
                         ],
                       ),
@@ -82,8 +111,12 @@ class CatalogManagementPage extends ConsumerWidget {
     );
   }
 
-  void _reorder(WidgetRef ref, List<CatalogItemEntity> items, int oldIndex,
-      int newIndex) {
+  void _reorder(
+    WidgetRef ref,
+    List<CatalogItemEntity> items,
+    int oldIndex,
+    int newIndex,
+  ) {
     if (newIndex > oldIndex) newIndex--;
     final list = [...items];
     final moved = list.removeAt(oldIndex);
@@ -97,16 +130,22 @@ class CatalogManagementPage extends ConsumerWidget {
   }
 
   void _showEditDialog(
-      BuildContext context, WidgetRef ref, CatalogItemEntity? existing) {
+    BuildContext context,
+    WidgetRef ref,
+    CatalogItemEntity? existing,
+  ) {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final catCtrl = TextEditingController(text: existing?.category ?? '');
+    final imageUrlCtrl = TextEditingController(text: existing?.imageUrl ?? '');
     final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(existing == null
-            ? context.l10n.adminCatalogAddTitle
-            : context.l10n.adminCatalogEditTitle),
+        title: Text(
+          existing == null
+              ? context.l10n.adminCatalogAddTitle
+              : context.l10n.adminCatalogEditTitle,
+        ),
         content: Form(
           key: formKey,
           child: Column(
@@ -114,8 +153,9 @@ class CatalogManagementPage extends ConsumerWidget {
             children: [
               TextFormField(
                 controller: nameCtrl,
-                decoration:
-                    InputDecoration(labelText: context.l10n.adminCatalogNameLabel),
+                decoration: InputDecoration(
+                  labelText: context.l10n.adminCatalogNameLabel,
+                ),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? context.l10n.validationEnterName
                     : null,
@@ -124,10 +164,36 @@ class CatalogManagementPage extends ConsumerWidget {
               TextFormField(
                 controller: catCtrl,
                 decoration: InputDecoration(
-                    labelText: context.l10n.adminCatalogCategoryLabel),
+                  labelText: context.l10n.adminCatalogCategoryLabel,
+                ),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? context.l10n.adminCatalogCategoryRequired
                     : null,
+              ),
+              const SizedBox(height: 12),
+              StatefulBuilder(
+                builder: (context, setState) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: imageUrlCtrl,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.catalogImageUrlLabel,
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    if (imageUrlCtrl.text.trim().isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Image.network(
+                        imageUrlCtrl.text.trim(),
+                        height: 56,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.broken_image),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -147,6 +213,7 @@ class CatalogManagementPage extends ConsumerWidget {
                 category: catCtrl.text.trim(),
                 sortOrder: existing?.sortOrder ?? 9999,
                 active: existing?.active ?? true,
+                imageUrl: imageUrlCtrl.text.trim(),
               );
               await repo.upsert(item);
               if (context.mounted) Navigator.pop(context);

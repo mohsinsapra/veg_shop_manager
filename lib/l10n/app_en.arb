@@ -306,6 +306,7 @@
   "adminCatalogNameLabel": "Name",
   "adminCatalogCategoryLabel": "Category",
   "adminCatalogCategoryRequired": "Enter a category",
+  "catalogImageUrlLabel": "Image URL (optional)",
   "adminMembersShopsCount": "{count, plural, =1{• 1 shop} other{• {count} shops}}",
   "@adminMembersShopsCount": {
     "placeholders": {

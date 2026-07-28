@@ -5,8 +5,14 @@ class FirestoreRefs {
   FirestoreRefs(this.db);
 
   CollectionReference<Map<String, dynamic>> get shops => db.collection('shops');
-  CollectionReference<Map<String, dynamic>> get catalogItems => db.collection('catalogItems');
-  CollectionReference<Map<String, dynamic>> get members => db.collection('members');
-  CollectionReference<Map<String, dynamic>> get cycles => db.collection('cycles');
-  CollectionReference<Map<String, dynamic>> get entries => db.collection('entries');
+  CollectionReference<Map<String, dynamic>> get catalogItems =>
+      db.collection('catalogItems');
+  CollectionReference<Map<String, dynamic>> get members =>
+      db.collection('members');
+  CollectionReference<Map<String, dynamic>> get cycles =>
+      db.collection('cycles');
+  CollectionReference<Map<String, dynamic>> get entries =>
+      db.collection('entries');
+  DocumentReference<Map<String, dynamic>> get appSettings =>
+      db.collection('settings').doc('app');
 }

@@ -239,7 +239,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
         items: allItems,
         qtyByItem: {for (final it in allItems) it.id: qtyOf(it)},
         onSet: (item, q) => set(item, q),
-        showImages: ref.watch(showItemImagesProvider),
+        showImages: ref.watch(showItemImagesProvider).valueOrNull ?? false,
         compact: keyboardOpen,
       );
     }

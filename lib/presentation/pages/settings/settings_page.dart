@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/management_providers.dart';
 import '../../providers/show_item_images_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 
@@ -55,9 +56,9 @@ class SettingsPage extends ConsumerWidget {
           const Divider(),
           _sectionHeader(context, context.l10n.settingsDisplay),
           SwitchListTile(
-            value: ref.watch(showItemImagesProvider),
+            value: ref.watch(showItemImagesProvider).valueOrNull ?? false,
             onChanged: (v) =>
-                ref.read(showItemImagesProvider.notifier).set(v),
+                ref.read(settingsRepositoryProvider).setShowItemImages(v),
             title: Text(context.l10n.settingsShowImages),
             subtitle: Text(context.l10n.settingsShowImagesSubtitle),
           ),
@@ -67,10 +68,7 @@ class SettingsPage extends ConsumerWidget {
   }
 
   Widget _sectionHeader(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-      );
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+    child: Text(text, style: Theme.of(context).textTheme.titleMedium),
+  );
 }

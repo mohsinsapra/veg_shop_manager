@@ -36,6 +36,10 @@ service cloud.firestore {
       allow read: if isActiveMember();
       allow write: if isAdmin();
     }
+    match /settings/{id} {
+      allow read: if isActiveMember();
+      allow write: if isAdmin();
+    }
     match /cycles/{id} {
       allow read: if isActiveMember();
       allow write: if isActiveMember(); // members open cycles by adding entries
