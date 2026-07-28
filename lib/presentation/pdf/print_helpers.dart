@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
@@ -32,8 +31,12 @@ Future<void> preloadPdfFonts() async {
 ///   offers Print, Save to Files, and send. `layoutPdf`'s print dialog is
 ///   unreliable on mobile, so we share instead.
 /// - Desktop / desktop web: the print dialog.
-Future<void> printBytes(Uint8List bytes, {String name = 'greenchain.pdf'}) async {
-  final isMobile = defaultTargetPlatform == TargetPlatform.android ||
+Future<void> printBytes(
+  Uint8List bytes, {
+  String name = 'greenchain.pdf',
+}) async {
+  final isMobile =
+      defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
   if (isMobile) {
     await Printing.sharePdf(bytes: bytes, filename: name);
@@ -52,8 +55,7 @@ Future<GridTotalMode?> pickGridTotalMode(BuildContext context) {
       title: Text(l10n.pdfTotalModeTitle),
       children: [
         SimpleDialogOption(
-          onPressed: () =>
-              Navigator.pop(context, GridTotalMode.shopsAndTotal),
+          onPressed: () => Navigator.pop(context, GridTotalMode.shopsAndTotal),
           child: Text(l10n.pdfTotalModeShopsAndTotal),
         ),
         SimpleDialogOption(
@@ -71,18 +73,45 @@ Future<GridTotalMode?> pickGridTotalMode(BuildContext context) {
 
 /// Runs a build+print action, surfacing any failure as a SnackBar instead of
 /// an uncaught error (font fetch, print dialog, etc.).
+///
+/// [deliver] lets callers (tests) intercept the final bytes instead of
+/// handing them to the platform share/print sheet; defaults to [printBytes].
 Future<void> runPrint(
   BuildContext context,
-  Future<Uint8List> Function(ShoppingPdfService svc, AppLocalizations l10n) build, {
+  Future<Uint8List> Function(ShoppingPdfService svc, AppLocalizations l10n)
+  build, {
   String name = 'greenchain.pdf',
+  Future<void> Function(Uint8List bytes, {String name})? deliver,
 }) async {
   final messenger = ScaffoldMessenger.of(context);
   final l10n = context.l10n;
+  // Shown immediately so the tap visibly registers before the (possibly
+  // slow) font fetch / PDF build / share sheet completes.
+  messenger.showSnackBar(
+    SnackBar(
+      duration: const Duration(seconds: 30),
+      content: Row(
+        children: [
+          const SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 12),
+          Text(l10n.printPreparing),
+        ],
+      ),
+    ),
+  );
   try {
     final svc = await buildPdfService();
     final bytes = await build(svc, l10n);
-    await printBytes(bytes, name: name);
+    await (deliver ?? printBytes)(bytes, name: name);
+    messenger.hideCurrentSnackBar();
   } catch (e) {
-    messenger.showSnackBar(SnackBar(content: Text(l10n.printFailed(e.toString()))));
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(content: Text(l10n.printFailed(e.toString()))),
+    );
   }
 }

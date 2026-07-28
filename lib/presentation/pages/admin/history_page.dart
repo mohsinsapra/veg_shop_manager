@@ -61,10 +61,12 @@ class HistoryPage extends ConsumerWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         style: FilledButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.errorContainer,
-                          foregroundColor:
-                              Theme.of(context).colorScheme.onErrorContainer,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.errorContainer,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onErrorContainer,
                         ),
                         onPressed: () => _confirmClearAll(context, ref),
                       ),
@@ -76,7 +78,9 @@ class HistoryPage extends ConsumerWidget {
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(top: 4, bottom: 16),
-                children: [for (final c in cycles) _cycleCard(context, ref, c, isAdmin)],
+                children: [
+                  for (final c in cycles) _cycleCard(context, ref, c, isAdmin),
+                ],
               ),
             ),
           ],
@@ -86,11 +90,17 @@ class HistoryPage extends ConsumerWidget {
   }
 
   Widget _cycleCard(
-      BuildContext context, WidgetRef ref, CycleEntity c, bool isAdmin) {
+    BuildContext context,
+    WidgetRef ref,
+    CycleEntity c,
+    bool isAdmin,
+  ) {
     final scheme = Theme.of(context).colorScheme;
     final when = (c.completedAt ?? c.openedAt).toLocal();
-    final dateStr =
-        DateFormat('EEE, d MMM yyyy', context.l10n.localeName).format(when);
+    final dateStr = DateFormat(
+      'EEE, d MMM yyyy',
+      context.l10n.localeName,
+    ).format(when);
     final timeStr = DateFormat('HH:mm', context.l10n.localeName).format(when);
     return Card(
       elevation: 0,
@@ -117,8 +127,11 @@ class HistoryPage extends ConsumerWidget {
               ),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(Icons.receipt_long_outlined,
-                color: scheme.onPrimary, size: 24),
+            child: Icon(
+              Icons.receipt_long_outlined,
+              color: scheme.onPrimary,
+              size: 24,
+            ),
           ),
           title: Text(
             dateStr,
@@ -149,12 +162,14 @@ class HistoryPage extends ConsumerWidget {
                     child: LinearProgressIndicator(),
                   );
                 }
-                final entries = entriesAsync.valueOrNull ?? const <EntryEntity>[];
+                final entries =
+                    entriesAsync.valueOrNull ?? const <EntryEntity>[];
                 return Column(
                   children: [
                     Divider(
-                        height: 1,
-                        color: scheme.outlineVariant.withValues(alpha: 0.4)),
+                      height: 1,
+                      color: scheme.outlineVariant.withValues(alpha: 0.4),
+                    ),
                     const SizedBox(height: 8),
                     for (final e in entries)
                       Padding(
@@ -169,7 +184,9 @@ class HistoryPage extends ConsumerWidget {
                             ),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 3),
+                                horizontal: 10,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: scheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(20),
@@ -197,11 +214,16 @@ class HistoryPage extends ConsumerWidget {
   }
 
   Widget _printMenu(
-      BuildContext context, WidgetRef ref, String cycleId, bool isAdmin) {
-    final shops = (ref.watch(shopsProvider).valueOrNull ?? const <ShopEntity>[])
-        .where((s) => s.active)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    BuildContext context,
+    WidgetRef ref,
+    String cycleId,
+    bool isAdmin,
+  ) {
+    final shops =
+        (ref.watch(shopsProvider).valueOrNull ?? const <ShopEntity>[])
+            .where((s) => s.active)
+            .toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert),
       tooltip: context.l10n.adminHistoryPrintTooltip,
@@ -216,11 +238,15 @@ class HistoryPage extends ConsumerWidget {
       },
       itemBuilder: (context) => [
         PopupMenuItem(
-            value: 'combined', child: Text(context.l10n.printCombinedAllShops)),
+          value: 'combined',
+          child: Text(context.l10n.printCombinedAllShops),
+        ),
         const PopupMenuDivider(),
         for (final s in shops)
           PopupMenuItem(
-              value: s.id, child: Text(context.l10n.printShopListItem(s.name))),
+            value: s.id,
+            child: Text(context.l10n.printShopListItem(s.name)),
+          ),
         if (isAdmin) ...[
           const PopupMenuDivider(),
           PopupMenuItem(
@@ -239,41 +265,50 @@ class HistoryPage extends ConsumerWidget {
   // can't silently no-op if the history list rebuilds mid-fetch.
 
   Future<void> _printCycleCombined(
-      BuildContext context, WidgetRef ref, String cycleId) async {
+    BuildContext context,
+    WidgetRef ref,
+    String cycleId,
+  ) async {
     final mode = await pickGridTotalMode(context);
     if (mode == null) return;
     if (!context.mounted) return;
     return runPrint(context, (svc, l10n) async {
-      final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
+      final entries = await ref
+          .read(entryRepositoryProvider)
+          .getByCycle(cycleId);
       return _buildCombined(ref, svc, l10n, entries, mode);
     }, name: 'greenchain-history-combined.pdf');
   }
 
   Future<void> _printAllCombined(
-      BuildContext context, WidgetRef ref, List<CycleEntity> cycles) async {
+    BuildContext context,
+    WidgetRef ref,
+    List<CycleEntity> cycles,
+  ) async {
     final mode = await pickGridTotalMode(context);
     if (mode == null) return;
     if (!context.mounted) return;
     return runPrint(context, (svc, l10n) async {
       final repo = ref.read(entryRepositoryProvider);
-      final all = <EntryEntity>[];
-      for (final c in cycles) {
-        all.addAll(await repo.getByCycle(c.id));
-      }
+      final lists = await Future.wait(cycles.map((c) => repo.getByCycle(c.id)));
+      final all = [for (final l in lists) ...l];
       return _buildCombined(ref, svc, l10n, all, mode);
     }, name: 'greenchain-history-all.pdf');
   }
 
   /// Builds a combined paper grid from a set of entries (summed by item+shop,
   /// so aggregating multiple cycles works).
-  Future<Uint8List> _buildCombined(WidgetRef ref, ShoppingPdfService svc,
-      AppLocalizations l10n, List<EntryEntity> entries,
-      GridTotalMode totalMode) async {
+  Future<Uint8List> _buildCombined(
+    WidgetRef ref,
+    ShoppingPdfService svc,
+    AppLocalizations l10n,
+    List<EntryEntity> entries,
+    GridTotalMode totalMode,
+  ) async {
     final catalog = await ref.read(catalogProvider.future);
-    final shops = (await ref.read(shopsProvider.future))
-        .where((s) => s.active)
-        .toList()
-      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final shops =
+        (await ref.read(shopsProvider.future)).where((s) => s.active).toList()
+          ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final qty = <String, Map<String, double>>{};
     for (final e in entries) {
       final id = _resolveCatalogId(e, catalog);
@@ -292,15 +327,29 @@ class HistoryPage extends ConsumerWidget {
   }
 
   Future<void> _printCycleShop(
-      BuildContext context, WidgetRef ref, String cycleId, String shopId) {
+    BuildContext context,
+    WidgetRef ref,
+    String cycleId,
+    String shopId,
+  ) {
     return runPrint(context, (svc, l10n) async {
-      final entries = await ref.read(entryRepositoryProvider).getByCycle(cycleId);
+      final entries = await ref
+          .read(entryRepositoryProvider)
+          .getByCycle(cycleId);
       final shops = await ref.read(shopsProvider.future);
       final catalog = await ref.read(catalogProvider.future);
-      final shop = shops.firstWhere((s) => s.id == shopId,
-          orElse: () => shops.isEmpty
-              ? const ShopEntity(id: '', name: 'Shop', code: '', sortOrder: 0, active: true)
-              : shops.first);
+      final shop = shops.firstWhere(
+        (s) => s.id == shopId,
+        orElse: () => shops.isEmpty
+            ? const ShopEntity(
+                id: '',
+                name: 'Shop',
+                code: '',
+                sortOrder: 0,
+                active: true,
+              )
+            : shops.first,
+      );
       final qtyByItem = <String, double>{};
       for (final e in entries.where((e) => e.shopId == shopId)) {
         final id = _resolveCatalogId(e, catalog);
@@ -333,7 +382,10 @@ class HistoryPage extends ConsumerWidget {
   }
 
   Future<void> _confirmDeleteCycle(
-      BuildContext context, WidgetRef ref, String cycleId) async {
+    BuildContext context,
+    WidgetRef ref,
+    String cycleId,
+  ) async {
     final l10n = context.l10n;
     final ok = await showDialog<bool>(
       context: context,
@@ -342,11 +394,13 @@ class HistoryPage extends ConsumerWidget {
         content: Text(l10n.adminHistoryDeleteConfirmBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.delete)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
         ],
       ),
     );
@@ -364,11 +418,13 @@ class HistoryPage extends ConsumerWidget {
         content: Text(l10n.adminHistoryClearAllConfirmBody),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(l10n.cancel)),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
           FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(l10n.delete)),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
         ],
       ),
     );

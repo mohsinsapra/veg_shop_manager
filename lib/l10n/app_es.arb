@@ -194,6 +194,7 @@
       }
     }
   },
+  "printPreparing": "Preparando PDF…",
   "adminHistoryDeleteCycle": "Eliminar este historial",
   "adminHistoryDeleteConfirmTitle": "¿Eliminar entrada del historial?",
   "adminHistoryDeleteConfirmBody": "Esta entrada del historial se ocultará y dejará de aparecer en la lista. Esta acción no se puede deshacer desde la aplicación.",
