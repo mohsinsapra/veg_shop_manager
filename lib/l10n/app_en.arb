@@ -316,6 +316,8 @@
     }
   },
   "adminMembersAddTitle": "Add Member",
+  "adminMembersDeleteConfirmTitle": "Delete member?",
+  "adminMembersDeleteConfirmBody": "This removes the member's access to the app. Their Google account itself is not affected. This cannot be undone.",
   "adminMembersEditTitle": "Edit Member",
   "adminMembersEmailLabel": "Google email",
   "adminMembersEmailInvalid": "Enter a valid email",

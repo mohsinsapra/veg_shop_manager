@@ -140,6 +140,8 @@
   "catalogImageUrlLabel": "URL de imagen (opcional)",
   "adminMembersShopsCount": "{count, plural, =1{• 1 tienda} other{• {count} tiendas}}",
   "adminMembersAddTitle": "Añadir miembro",
+  "adminMembersDeleteConfirmTitle": "¿Eliminar miembro?",
+  "adminMembersDeleteConfirmBody": "Esto elimina el acceso del miembro a la aplicación. Su cuenta de Google no se ve afectada. No se puede deshacer.",
   "adminMembersEditTitle": "Editar miembro",
   "adminMembersEmailLabel": "Correo de Google",
   "adminMembersEmailInvalid": "Introduce un correo válido",

@@ -25,8 +25,10 @@ class MembersManagementPage extends ConsumerWidget {
                   child: Icon(m.isAdmin ? Icons.shield : Icons.person),
                 ),
                 title: Text(m.displayName),
-                subtitle: Text('${m.email} • ${m.role == MemberRole.admin ? context.l10n.adminMembersRoleAdmin : context.l10n.adminMembersRoleMember}'
-                    '${m.shopIds.isEmpty ? '' : ' ${context.l10n.adminMembersShopsCount(m.shopIds.length)}'}'),
+                subtitle: Text(
+                  '${m.email} • ${m.role == MemberRole.admin ? context.l10n.adminMembersRoleAdmin : context.l10n.adminMembersRoleMember}'
+                  '${m.shopIds.isEmpty ? '' : ' ${context.l10n.adminMembersShopsCount(m.shopIds.length)}'}',
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -38,6 +40,17 @@ class MembersManagementPage extends ConsumerWidget {
                     IconButton(
                       icon: const Icon(Icons.edit),
                       onPressed: () => _showEditDialog(context, ref, m),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline),
+                      color: Theme.of(context).colorScheme.error,
+                      tooltip: context.l10n.delete,
+                      // An admin cannot delete their own account: losing your
+                      // access mid-session would lock you out of undoing it.
+                      onPressed:
+                          m.id == ref.watch(authControllerProvider).member?.id
+                          ? null
+                          : () => _confirmDelete(context, ref, m),
                     ),
                   ],
                 ),
@@ -52,7 +65,44 @@ class MembersManagementPage extends ConsumerWidget {
     );
   }
 
-  void _showEditDialog(BuildContext context, WidgetRef ref, MemberEntity? existing) {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    MemberEntity m,
+  ) async {
+    final l10n = context.l10n;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.adminMembersDeleteConfirmTitle),
+        content: Text(
+          '${m.displayName} (${m.email})\n\n'
+          '${l10n.adminMembersDeleteConfirmBody}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(memberRepositoryProvider).delete(m.id);
+  }
+
+  void _showEditDialog(
+    BuildContext context,
+    WidgetRef ref,
+    MemberEntity? existing,
+  ) {
     final emailCtrl = TextEditingController(text: existing?.email ?? '');
     final nameCtrl = TextEditingController(text: existing?.displayName ?? '');
     var role = existing?.role ?? MemberRole.member;
@@ -64,9 +114,11 @@ class MembersManagementPage extends ConsumerWidget {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Text(existing == null
-              ? context.l10n.adminMembersAddTitle
-              : context.l10n.adminMembersEditTitle),
+          title: Text(
+            existing == null
+                ? context.l10n.adminMembersAddTitle
+                : context.l10n.adminMembersEditTitle,
+          ),
           content: Form(
             key: formKey,
             child: SingleChildScrollView(
@@ -77,7 +129,8 @@ class MembersManagementPage extends ConsumerWidget {
                     controller: emailCtrl,
                     enabled: existing == null,
                     decoration: InputDecoration(
-                        labelText: context.l10n.adminMembersEmailLabel),
+                      labelText: context.l10n.adminMembersEmailLabel,
+                    ),
                     validator: (v) => (v == null || !v.contains('@'))
                         ? context.l10n.adminMembersEmailInvalid
                         : null,
@@ -86,7 +139,8 @@ class MembersManagementPage extends ConsumerWidget {
                   TextFormField(
                     controller: nameCtrl,
                     decoration: InputDecoration(
-                        labelText: context.l10n.adminMembersNameLabel),
+                      labelText: context.l10n.adminMembersNameLabel,
+                    ),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? context.l10n.validationEnterName
                         : null,
@@ -95,14 +149,17 @@ class MembersManagementPage extends ConsumerWidget {
                   DropdownButtonFormField<MemberRole>(
                     initialValue: role,
                     decoration: InputDecoration(
-                        labelText: context.l10n.adminMembersRoleLabel),
+                      labelText: context.l10n.adminMembersRoleLabel,
+                    ),
                     items: [
                       DropdownMenuItem(
-                          value: MemberRole.member,
-                          child: Text(context.l10n.adminMembersRoleMember)),
+                        value: MemberRole.member,
+                        child: Text(context.l10n.adminMembersRoleMember),
+                      ),
                       DropdownMenuItem(
-                          value: MemberRole.admin,
-                          child: Text(context.l10n.adminMembersRoleAdmin)),
+                        value: MemberRole.admin,
+                        child: Text(context.l10n.adminMembersRoleAdmin),
+                      ),
                     ],
                     onChanged: (v) =>
                         setState(() => role = v ?? MemberRole.member),

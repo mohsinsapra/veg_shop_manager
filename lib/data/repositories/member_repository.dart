@@ -26,7 +26,19 @@ class MemberRepository {
   Future<void> linkUid(String id, String uid) =>
       _refs.members.doc(id.toLowerCase()).update({'uid': uid});
 
-  Stream<List<MemberEntity>> watchAll() => retryingSnapshots(() =>
-      _refs.members.orderBy('displayName').snapshots().map((snap) =>
-          snap.docs.map((d) => MemberEntity.fromMap(d.id, d.data())).toList()));
+  /// Removes the member document — the person loses app access. Their Google
+  /// account itself is untouched (Firebase Auth users are managed separately).
+  Future<void> delete(String id) =>
+      _refs.members.doc(id.toLowerCase()).delete();
+
+  Stream<List<MemberEntity>> watchAll() => retryingSnapshots(
+    () => _refs.members
+        .orderBy('displayName')
+        .snapshots()
+        .map(
+          (snap) => snap.docs
+              .map((d) => MemberEntity.fromMap(d.id, d.data()))
+              .toList(),
+        ),
+  );
 }
