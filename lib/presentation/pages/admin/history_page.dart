@@ -6,6 +6,7 @@ import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/utils/qty_format.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
+import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/cycle_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
 import '../../../domain/entities/shop_entity.dart';
@@ -275,7 +276,9 @@ class HistoryPage extends ConsumerWidget {
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
     final qty = <String, Map<String, double>>{};
     for (final e in entries) {
-      final byShop = qty.putIfAbsent(e.itemId, () => {});
+      final id = _resolveCatalogId(e, catalog);
+      if (id == null) continue;
+      final byShop = qty.putIfAbsent(id, () => {});
       byShop[e.shopId] = (byShop[e.shopId] ?? 0) + e.quantity;
     }
     return svc.adminFullGrid(
@@ -300,7 +303,9 @@ class HistoryPage extends ConsumerWidget {
               : shops.first);
       final qtyByItem = <String, double>{};
       for (final e in entries.where((e) => e.shopId == shopId)) {
-        qtyByItem[e.itemId] = (qtyByItem[e.itemId] ?? 0) + e.quantity;
+        final id = _resolveCatalogId(e, catalog);
+        if (id == null) continue;
+        qtyByItem[id] = (qtyByItem[id] ?? 0) + e.quantity;
       }
       return svc.shopSheet(
         shopName: shop.name,
@@ -311,6 +316,20 @@ class HistoryPage extends ConsumerWidget {
         l10n: l10n,
       );
     }, name: 'greenchain-history-shop.pdf');
+  }
+
+  /// Maps a history entry onto the CURRENT catalog. Old cycles can hold item
+  /// ids from a previous catalog seeding; those print as an empty grid when
+  /// matched by id alone, so fall back to the entry's stored item name.
+  String? _resolveCatalogId(EntryEntity e, List<CatalogItemEntity> catalog) {
+    for (final c in catalog) {
+      if (c.id == e.itemId) return e.itemId;
+    }
+    final name = e.itemName.trim().toLowerCase();
+    for (final c in catalog) {
+      if (c.name.trim().toLowerCase() == name) return c.id;
+    }
+    return null;
   }
 
   Future<void> _confirmDeleteCycle(
