@@ -66,14 +66,32 @@ void main() {
     expect(entries.single.quantity, 9);
   });
 
-  test('hideCycle removes a cycle from watchCompleted', () async {
+  test('hideCycle marks a cycle hidden but watchCompleted still carries it',
+      () async {
+    // watchCompleted no longer filters hidden cycles out itself — that's
+    // now the caller's job (HistoryPage shows them only to the owner) — so
+    // the repository stream must keep returning the cycle with hiddenAt set.
     final repo = CycleRepository(refs);
     final c = await repo.ensureOpenCycle(now);
     await repo.completeCycle(c.id, now);
     expect((await repo.watchCompleted().first).length, 1);
+    expect((await repo.watchCompleted().first).single.hiddenAt, isNull);
 
     await repo.hideCycle(c.id);
-    expect(await repo.watchCompleted().first, isEmpty);
+    final afterHide = await repo.watchCompleted().first;
+    expect(afterHide.length, 1);
+    expect(afterHide.single.hiddenAt, isNotNull);
+  });
+
+  test('unhideCycle clears hiddenAt', () async {
+    final repo = CycleRepository(refs);
+    final c = await repo.ensureOpenCycle(now);
+    await repo.completeCycle(c.id, now);
+    await repo.hideCycle(c.id);
+    expect((await repo.watchCompleted().first).single.hiddenAt, isNotNull);
+
+    await repo.unhideCycle(c.id);
+    expect((await repo.watchCompleted().first).single.hiddenAt, isNull);
   });
 
   test('hideAllCompleted hides every completed cycle', () async {
@@ -86,6 +104,8 @@ void main() {
     expect((await repo.watchCompleted().first).length, 2);
 
     await repo.hideAllCompleted();
-    expect(await repo.watchCompleted().first, isEmpty);
+    final afterHideAll = await repo.watchCompleted().first;
+    expect(afterHideAll.length, 2);
+    expect(afterHideAll.every((c) => c.hiddenAt != null), isTrue);
   });
 }

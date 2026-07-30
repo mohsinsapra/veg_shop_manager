@@ -387,5 +387,7 @@
   "adminHistoryClearAll": "Clear all",
   "adminHistoryClearAllConfirmTitle": "Clear all history?",
   "adminHistoryClearAllConfirmBody": "All completed shopping history will be hidden and no longer appear. This cannot be undone from the app.",
-  "adminHistoryClearAllSuccess": "History cleared"
+  "adminHistoryClearAllSuccess": "History cleared",
+  "adminHistoryDeletedBadge": "Deleted",
+  "adminHistoryRestore": "Restore"
 }

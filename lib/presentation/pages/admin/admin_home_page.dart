@@ -70,6 +70,16 @@ class _AdminHomePageState extends ConsumerState<AdminHomePage> {
       appBar: AppBar(
         title: Text(context.l10n.adminHomeAppBarTitle(titles[_index])),
         actions: [
+          // Owner-only, always visible in the app bar so it never depends on
+          // opening the drawer (the rail and bottom bar have no Settings).
+          if (_isOwner)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              tooltip: context.l10n.settingsTitle,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SettingsPage()),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: context.l10n.logoutTooltip,

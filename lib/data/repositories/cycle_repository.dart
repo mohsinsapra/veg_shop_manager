@@ -41,13 +41,15 @@ class CycleRepository {
         'completedAt': now.toUtc().toIso8601String(),
       });
 
+  /// All completed cycles, including hidden (soft-deleted) ones. Callers
+  /// decide who gets to see hidden cycles (only the app owner does — see
+  /// `HistoryPage`); everyone else must filter `hiddenAt == null` out.
   Stream<List<CycleEntity>> watchCompleted() => retryingSnapshots(() => _refs
       .cycles
       .where('status', isEqualTo: 'completed')
       .snapshots()
       .map((snap) => (snap.docs
           .map((d) => CycleEntity.fromMap(d.id, d.data()))
-          .where((c) => c.hiddenAt == null)
           .toList()
         ..sort((a, b) => (b.completedAt ?? b.openedAt)
             .compareTo(a.completedAt ?? a.openedAt)))));
@@ -56,6 +58,9 @@ class CycleRepository {
       _refs.cycles.doc(cycleId).update({
         'hiddenAt': DateTime.now().toUtc().toIso8601String(),
       });
+
+  Future<void> unhideCycle(String cycleId) =>
+      _refs.cycles.doc(cycleId).update({'hiddenAt': null});
 
   Future<void> hideAllCompleted() async {
     final now = DateTime.now().toUtc().toIso8601String();

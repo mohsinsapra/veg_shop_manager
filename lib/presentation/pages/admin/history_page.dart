@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/l10n/l10n_extension.dart';
 import '../../../core/utils/qty_format.dart';
 import '../../../l10n/app_localizations.dart';
@@ -25,12 +26,23 @@ class HistoryPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cyclesAsync = ref.watch(completedCyclesProvider);
     final isAdmin = ref.watch(authControllerProvider).isAdmin;
+    final memberEmail = ref.watch(authControllerProvider).member?.email;
+    final isOwner = memberEmail?.toLowerCase() == AppConstants.ownerEmail;
 
     return cyclesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => DataErrorRetry(onRetry: () => refreshAppData(ref)),
-      data: (cycles) {
-        if (cycles.isEmpty) {
+      data: (allCycles) {
+        // Only the app owner sees hidden (soft-deleted) cycles; everyone
+        // else keeps the previous behavior of never seeing them.
+        final visibleCycles = isOwner
+            ? allCycles
+            : allCycles.where((c) => c.hiddenAt == null).toList();
+        // Deleted cycles never contribute to the printed aggregate, even
+        // for the owner who can still see them in the list.
+        final nonHiddenCycles =
+            allCycles.where((c) => c.hiddenAt == null).toList();
+        if (visibleCycles.isEmpty) {
           return Center(child: Text(context.l10n.adminHistoryEmpty));
         }
         return Column(
@@ -47,7 +59,8 @@ class HistoryPage extends ConsumerWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      onPressed: () => _printAllCombined(context, ref, cycles),
+                      onPressed: () =>
+                          _printAllCombined(context, ref, nonHiddenCycles),
                     ),
                   ),
                   if (isAdmin) ...[
@@ -79,7 +92,8 @@ class HistoryPage extends ConsumerWidget {
               child: ListView(
                 padding: const EdgeInsets.only(top: 4, bottom: 16),
                 children: [
-                  for (final c in cycles) _cycleCard(context, ref, c, isAdmin),
+                  for (final c in visibleCycles)
+                    _cycleCard(context, ref, c, isAdmin, isOwner),
                 ],
               ),
             ),
@@ -94,7 +108,9 @@ class HistoryPage extends ConsumerWidget {
     WidgetRef ref,
     CycleEntity c,
     bool isAdmin,
+    bool isOwner,
   ) {
+    final isHidden = c.hiddenAt != null;
     final scheme = Theme.of(context).colorScheme;
     final when = (c.completedAt ?? c.openedAt).toLocal();
     final dateStr = DateFormat(
@@ -105,7 +121,7 @@ class HistoryPage extends ConsumerWidget {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      color: scheme.surface,
+      color: isHidden ? scheme.surfaceContainerHighest : scheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
@@ -116,42 +132,83 @@ class HistoryPage extends ConsumerWidget {
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [scheme.primary, scheme.primary.withValues(alpha: 0.7)],
+          leading: Opacity(
+            opacity: isHidden ? 0.5 : 1,
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                gradient: isHidden
+                    ? null
+                    : LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          scheme.primary,
+                          scheme.primary.withValues(alpha: 0.7),
+                        ],
+                      ),
+                color: isHidden ? scheme.outline : null,
+                borderRadius: BorderRadius.circular(14),
               ),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: scheme.onPrimary,
-              size: 24,
+              child: Icon(
+                Icons.receipt_long_outlined,
+                color: scheme.onPrimary,
+                size: 24,
+              ),
             ),
           ),
-          title: Text(
-            dateStr,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 2),
+          title: Opacity(
+            opacity: isHidden ? 0.6 : 1,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.schedule, size: 14, color: scheme.outline),
-                const SizedBox(width: 4),
                 Text(
-                  timeStr,
-                  style: TextStyle(fontSize: 13, color: scheme.outline),
+                  dateStr,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
+                if (isHidden) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: scheme.errorContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      context.l10n.adminHistoryDeletedBadge,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: scheme.onErrorContainer,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
-          trailing: _printMenu(context, ref, c.id, isAdmin),
+          subtitle: Opacity(
+            opacity: isHidden ? 0.6 : 1,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.schedule, size: 14, color: scheme.outline),
+                  const SizedBox(width: 4),
+                  Text(
+                    timeStr,
+                    style: TextStyle(fontSize: 13, color: scheme.outline),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          trailing: _printMenu(context, ref, c, isAdmin, isOwner),
           children: [
             Consumer(
               builder: (context, ref, _) {
@@ -216,9 +273,12 @@ class HistoryPage extends ConsumerWidget {
   Widget _printMenu(
     BuildContext context,
     WidgetRef ref,
-    String cycleId,
+    CycleEntity cycle,
     bool isAdmin,
+    bool isOwner,
   ) {
+    final cycleId = cycle.id;
+    final isHidden = cycle.hiddenAt != null;
     final shops =
         (ref.watch(shopsProvider).valueOrNull ?? const <ShopEntity>[])
             .where((s) => s.active)
@@ -230,6 +290,8 @@ class HistoryPage extends ConsumerWidget {
       onSelected: (value) {
         if (value == 'delete') {
           _confirmDeleteCycle(context, ref, cycleId);
+        } else if (value == 'restore') {
+          ref.read(cycleRepositoryProvider).unhideCycle(cycleId);
         } else if (value == 'combined') {
           _printCycleCombined(context, ref, cycleId);
         } else {
@@ -247,7 +309,13 @@ class HistoryPage extends ConsumerWidget {
             value: s.id,
             child: Text(context.l10n.printShopListItem(s.name)),
           ),
-        if (isAdmin) ...[
+        if (isOwner && isHidden) ...[
+          const PopupMenuDivider(),
+          PopupMenuItem(
+            value: 'restore',
+            child: Text(context.l10n.adminHistoryRestore),
+          ),
+        ] else if (isAdmin) ...[
           const PopupMenuDivider(),
           PopupMenuItem(
             value: 'delete',
