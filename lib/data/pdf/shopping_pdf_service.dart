@@ -83,18 +83,26 @@ class ShoppingPdfService {
     final valueCols = columnHeaders.length;
     final perBlock = 1 + valueCols; // item name + value columns
 
-    pw.Widget cell(String text, {bool bold = false, bool header = false}) =>
-        pw.Container(
-          alignment: header ? pw.Alignment.center : pw.Alignment.centerLeft,
-          padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 1.2),
-          child: pw.Text(
-            text,
-            style: pw.TextStyle(
-                fontSize: 6.2,
-                fontWeight:
-                    (bold || header) ? pw.FontWeight.bold : pw.FontWeight.normal),
-          ),
-        );
+    // `shrinkToFit` keeps long item names on ONE line by scaling them down
+    // instead of wrapping: a wrapped name doubles its row's height, which is
+    // what used to push the grid onto a second page.
+    pw.Widget cell(String text,
+        {bool bold = false, bool header = false, bool shrinkToFit = false}) {
+      final txt = pw.Text(
+        text,
+        style: pw.TextStyle(
+            fontSize: 9,
+            fontWeight:
+                (bold || header) ? pw.FontWeight.bold : pw.FontWeight.normal),
+      );
+      return pw.Container(
+        alignment: header ? pw.Alignment.center : pw.Alignment.centerLeft,
+        padding: const pw.EdgeInsets.symmetric(horizontal: 2, vertical: 2.2),
+        child: shrinkToFit
+            ? pw.FittedBox(fit: pw.BoxFit.scaleDown, child: txt)
+            : txt,
+      );
+    }
 
     // Header row repeated for each block. The item column is headed like the
     // paper sheet: the first two blocks are vegetables (VERDURAS), the last is
@@ -118,7 +126,7 @@ class ShoppingPdfService {
       for (var b = 0; b < blocks; b++) {
         final idx = b * perCol + i;
         if (idx < rows.length) {
-          cells.add(cell(rows[idx].name));
+          cells.add(cell(rows[idx].name, shrinkToFit: true));
           for (final c in rows[idx].cells) {
             cells.add(cell(c, header: true));
           }
@@ -135,7 +143,7 @@ class ShoppingPdfService {
     for (var c = 0; c < perBlock * blocks; c++) {
       widths[c] = (c % perBlock == 0)
           ? const pw.FlexColumnWidth(2.4)
-          : const pw.FixedColumnWidth(11);
+          : const pw.FixedColumnWidth(17);
     }
 
     final doc = _doc();
@@ -148,9 +156,9 @@ class ShoppingPdfService {
       margin: const pw.EdgeInsets.all(12),
       build: (context) => [
         pw.Text(title,
-            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
-        pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 8)),
-        pw.SizedBox(height: 4),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold)),
+        pw.Text(_fmtDate(date, l10n), style: const pw.TextStyle(fontSize: 9)),
+        pw.SizedBox(height: 5),
         pw.Table(
           border: pw.TableBorder.all(width: 0.4, color: PdfColors.grey700),
           columnWidths: widths,
