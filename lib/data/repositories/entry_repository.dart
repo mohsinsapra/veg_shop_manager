@@ -38,6 +38,7 @@ class EntryRepository {
     required String createdBy,
     required DateTime now,
     String? notes,
+    double? packSize,
   }) =>
       setQuantityForShops(
         cycleId: cycleId,
@@ -48,6 +49,7 @@ class EntryRepository {
         createdBy: createdBy,
         now: now,
         notes: notes,
+        packSize: packSize,
       );
 
   /// Sets the same quantity for one item across [shopIds] in a single batch —
@@ -63,10 +65,11 @@ class EntryRepository {
     required String createdBy,
     required DateTime now,
     String? notes,
+    double? packSize,
   }) async {
     final batch = _refs.db.batch();
     for (final shopId in shopIds) {
-      final id = EntryEntity.buildId(cycleId, shopId, itemId);
+      final id = EntryEntity.buildId(cycleId, shopId, itemId, packSize: packSize);
       final doc = _refs.entries.doc(id);
       if (quantity <= 0) {
         batch.delete(doc);
@@ -83,6 +86,7 @@ class EntryRepository {
         bought: false,
         createdBy: createdBy,
         createdAt: now,
+        packSize: packSize,
       ).toMap()
         ..remove('bought')
         ..remove('createdAt');

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/utils/qty_format.dart';
 import '../../../data/pdf/shopping_pdf_service.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../../domain/entities/entry_entity.dart';
@@ -30,7 +31,57 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
   String _search = '';
   final Map<String, FocusNode> _qtyFocus = {};
 
+  // Which pack size is currently selected per sized item (list/grid views).
+  final Map<String, double> _selectedSize = {};
+
   FocusNode _focusFor(String id) => _qtyFocus.putIfAbsent(id, FocusNode.new);
+
+  /// The active pack size for [item] (list/grid views): the member's last
+  /// selection if still valid, else the smallest size. Null for plain items.
+  double? _selectedSizeFor(CatalogItemEntity item) {
+    if (item.packSizes.isEmpty) return null;
+    final sizes = [...item.packSizes]..sort();
+    final sel = _selectedSize[item.id];
+    if (sel != null && sizes.contains(sel)) return sel;
+    return sizes.first;
+  }
+
+  /// Chip row (+ "2×5kg · 1×10kg" summary) for a sized item's list/grid row.
+  Widget _sizeSelector(
+    CatalogItemEntity item,
+    double selected,
+    Map<double, double> qtyBySize,
+  ) {
+    final sizes = [...item.packSizes]..sort();
+    final unit = item.unit.isEmpty ? 'kg' : item.unit;
+    final summary = sizes
+        .where((s) => (qtyBySize[s] ?? 0) > 0)
+        .map((s) => '${fmtQty(qtyBySize[s] ?? 0)}×${fmtQty(s)}$unit')
+        .join(' · ');
+    return Wrap(
+      spacing: 4,
+      runSpacing: 2,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        for (final s in sizes)
+          ChoiceChip(
+            label: Text('${fmtQty(s)}$unit'),
+            visualDensity: VisualDensity.compact,
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            selected: s == selected,
+            onSelected: (_) => setState(() => _selectedSize[item.id] = s),
+          ),
+        if (summary.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Text(
+              summary,
+              style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+            ),
+          ),
+      ],
+    );
+  }
 
   @override
   void dispose() {
@@ -187,7 +238,7 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         final allEntries = await ref.read(openCycleEntriesProvider.future);
         final qty = <String, Map<String, double>>{};
         for (final e in allEntries.where((e) => myShopIds.contains(e.shopId))) {
-          (qty[e.itemId] ??= {})[e.shopId] = e.quantity;
+          (qty[itemSizeKey(e.itemId, e.packSize)] ??= {})[e.shopId] = e.quantity;
         }
         return svc.adminFullGrid(
           date: DateTime.now(),
@@ -200,7 +251,9 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       }
 
       final entries = await ref.read(shopEntriesProvider(shopId).future);
-      final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
+      final qtyByItem = {
+        for (final e in entries) itemSizeKey(e.itemId, e.packSize): e.quantity,
+      };
       return mode == 'sheet'
           ? svc.shopSheet(
               shopName: shop.name,
@@ -215,7 +268,15 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
               date: DateTime.now(),
               lines: [
                 for (final c in catalog.where((c) => c.active))
-                  PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0),
+                  if (c.packSizes.isEmpty)
+                    PdfLine(c.category, c.name, qtyByItem[c.id] ?? 0)
+                  else
+                    for (final size in ([...c.packSizes]..sort()))
+                      PdfLine(
+                        c.category,
+                        '${c.name} ${fmtQty(size)}${c.unit.isEmpty ? 'kg' : c.unit}',
+                        qtyByItem[itemSizeKey(c.id, size)] ?? 0,
+                      ),
               ],
               l10n: l10n,
             );
@@ -274,7 +335,18 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
     final entries =
         ref.watch(shopEntriesProvider(shop.id)).valueOrNull ??
         const <EntryEntity>[];
-    final qtyByItem = {for (final e in entries) e.itemId: e.quantity};
+    // Plain entries (no size) key qtyByItem as before; sized entries are
+    // kept separately so they never collide with each other or the base qty.
+    final qtyByItem = {
+      for (final e in entries)
+        if (e.packSize == null) e.itemId: e.quantity,
+    };
+    final sizeQtyByItem = <String, Map<double, double>>{};
+    for (final e in entries) {
+      if (e.packSize != null) {
+        (sizeQtyByItem[e.itemId] ??= {})[e.packSize!] = e.quantity;
+      }
+    }
 
     // Flat list in catalog (paper) order — the provider sorts by sortOrder,
     // which matches the paper sheet sequence.
@@ -283,15 +355,17 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    Future<void> set(CatalogItemEntity item, double q) => ref
-        .read(entryActionsProvider)
-        .submitQuantity(
-          shopId: shop.id,
-          itemId: item.id,
-          itemName: item.name,
-          quantity: q,
-          createdBy: memberId,
-        );
+    Future<void> set(CatalogItemEntity item, double q, {double? packSize}) =>
+        ref
+            .read(entryActionsProvider)
+            .submitQuantity(
+              shopId: shop.id,
+              itemId: item.id,
+              itemName: item.name,
+              quantity: q,
+              createdBy: memberId,
+              packSize: packSize,
+            );
 
     void focusNext(String currentItemId) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -310,7 +384,11 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
       return SwipeEntryDeck(
         items: items,
         qtyByItem: {for (final it in items) it.id: qtyByItem[it.id] ?? 0},
-        onSet: (item, q) => set(item, q),
+        sizeQtyByItem: {
+          for (final it in items)
+            if (sizeQtyByItem[it.id] != null) it.id: sizeQtyByItem[it.id]!,
+        },
+        onSet: (item, q, {packSize}) => set(item, q, packSize: packSize),
         showImages: ref.watch(showItemImagesProvider).valueOrNull ?? false,
       );
     }
@@ -327,17 +405,21 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
           itemCount: items.length,
           itemBuilder: (context, i) {
             final item = items[i];
-            final q = qtyByItem[item.id] ?? 0;
+            final size = _selectedSizeFor(item);
+            final qtyBySize = sizeQtyByItem[item.id] ?? const {};
+            final q = size == null ? (qtyByItem[item.id] ?? 0) : (qtyBySize[size] ?? 0);
             return EntryCard(
               name: item.name,
               qty: q,
+              sizeSelector:
+                  size == null ? null : _sizeSelector(item, size, qtyBySize),
               onDecrement: q > 0
-                  ? () =>
-                        set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble(),
+                      packSize: size)
                   : null,
-              onIncrement: () => set(item, q + 1),
+              onIncrement: () => set(item, q + 1, packSize: size),
               focusNode: _focusFor(item.id),
-              onQtyEntered: (v) => set(item, v),
+              onQtyEntered: (v) => set(item, v, packSize: size),
               onNext: () => focusNext(item.id),
             );
           },
@@ -352,19 +434,22 @@ class _MemberHomePageState extends ConsumerState<MemberHomePage> {
         itemCount: items.length,
         itemBuilder: (context, i) {
           final item = items[i];
-          final q = qtyByItem[item.id] ?? 0;
+          final size = _selectedSizeFor(item);
+          final qtyBySize = sizeQtyByItem[item.id] ?? const {};
+          final q = size == null ? (qtyByItem[item.id] ?? 0) : (qtyBySize[size] ?? 0);
           return ListTile(
             dense: true,
             title: Text(item.name),
+            subtitle: size == null ? null : _sizeSelector(item, size, qtyBySize),
             trailing: EntryQtyStepper(
               qty: q,
               onDecrement: q > 0
-                  ? () =>
-                        set(item, (q - 1).clamp(0, double.infinity).toDouble())
+                  ? () => set(item, (q - 1).clamp(0, double.infinity).toDouble(),
+                      packSize: size)
                   : null,
-              onIncrement: () => set(item, q + 1),
+              onIncrement: () => set(item, q + 1, packSize: size),
               focusNode: _focusFor(item.id),
-              onQtyEntered: (v) => set(item, v),
+              onQtyEntered: (v) => set(item, v, packSize: size),
               onNext: () => focusNext(item.id),
             ),
           );

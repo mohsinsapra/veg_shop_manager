@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/l10n/l10n_extension.dart';
+import '../../../core/utils/qty_format.dart';
 import '../../../domain/entities/catalog_item_entity.dart';
 import '../../providers/management_providers.dart';
 import '../../widgets/data_error_retry.dart';
@@ -79,7 +80,9 @@ class CatalogManagementPage extends ConsumerWidget {
                               ),
                       ),
                       title: Text(item.name),
-                      subtitle: Text(item.category),
+                      subtitle: Text(item.packSizes.isEmpty
+                          ? item.category
+                          : '${item.category} · ${_sizesHint(item)}'),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -111,6 +114,13 @@ class CatalogManagementPage extends ConsumerWidget {
     );
   }
 
+  /// Subtle catalog-list hint for a sized item, e.g. "5/10 kg".
+  String _sizesHint(CatalogItemEntity item) {
+    final sizes = [...item.packSizes]..sort();
+    final unit = item.unit.isEmpty ? 'kg' : item.unit;
+    return '${sizes.map(fmtQty).join('/')} $unit';
+  }
+
   void _reorder(
     WidgetRef ref,
     List<CatalogItemEntity> items,
@@ -137,6 +147,10 @@ class CatalogManagementPage extends ConsumerWidget {
     final nameCtrl = TextEditingController(text: existing?.name ?? '');
     final catCtrl = TextEditingController(text: existing?.category ?? '');
     final imageUrlCtrl = TextEditingController(text: existing?.imageUrl ?? '');
+    final unitCtrl = TextEditingController(text: existing?.unit ?? '');
+    final sizeInputCtrl = TextEditingController();
+    final packSizes = [...?existing?.packSizes];
+    String? sizeError;
     final formKey = GlobalKey<FormState>();
     showDialog(
       context: context,
@@ -192,6 +206,80 @@ class CatalogManagementPage extends ConsumerWidget {
                             const Icon(Icons.broken_image),
                       ),
                     ],
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: unitCtrl,
+                      decoration: InputDecoration(
+                        labelText: context.l10n.catalogUnitLabel,
+                        hintText: 'kg / caja / und',
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        context.l10n.catalogPackSizesLabel,
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    if (packSizes.isNotEmpty)
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          for (final size in packSizes)
+                            InputChip(
+                              label: Text(unitCtrl.text.trim().isEmpty
+                                  ? fmtQty(size)
+                                  : '${fmtQty(size)} ${unitCtrl.text.trim()}'),
+                              onDeleted: () =>
+                                  setState(() => packSizes.remove(size)),
+                            ),
+                        ],
+                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: sizeInputCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            decoration: InputDecoration(
+                              labelText: context.l10n.catalogPackSizeHint,
+                              errorText: sizeError,
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () {
+                            final raw =
+                                sizeInputCtrl.text.trim().replaceAll(',', '.');
+                            final value = double.tryParse(raw);
+                            setState(() {
+                              if (value == null || value <= 0) {
+                                sizeError =
+                                    context.l10n.catalogPackSizeInvalid;
+                              } else if (packSizes.contains(value)) {
+                                sizeError =
+                                    context.l10n.catalogPackSizeDuplicate;
+                              } else {
+                                packSizes.add(value);
+                                packSizes.sort();
+                                sizeInputCtrl.clear();
+                                sizeError = null;
+                              }
+                            });
+                          },
+                          child: Text(context.l10n.catalogPackSizeAdd),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -214,6 +302,8 @@ class CatalogManagementPage extends ConsumerWidget {
                 sortOrder: existing?.sortOrder ?? 9999,
                 active: existing?.active ?? true,
                 imageUrl: imageUrlCtrl.text.trim(),
+                unit: unitCtrl.text.trim(),
+                packSizes: [...packSizes]..sort(),
               );
               await repo.upsert(item);
               if (context.mounted) Navigator.pop(context);

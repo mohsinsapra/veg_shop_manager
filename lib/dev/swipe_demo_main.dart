@@ -35,7 +35,7 @@ class _DemoAppState extends State<_DemoApp> {
         body: SwipeEntryDeck(
           items: items,
           qtyByItem: qty,
-          onSet: (item, q) async => setState(() => qty[item.id] = q),
+          onSet: (item, q, {packSize}) async => setState(() => qty[item.id] = q),
         ),
       ),
     );

@@ -194,7 +194,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
         .where((c) => _search.isEmpty || c.name.toLowerCase().contains(_search))
         .toList();
 
-    Future<void> set(CatalogItemEntity item, double q) async {
+    Future<void> set(CatalogItemEntity item, double q, {double? packSize}) async {
       setState(() => _local[item.id] = q);
       await ref
           .read(entryActionsProvider)
@@ -206,6 +206,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
             itemName: item.name,
             quantity: q,
             createdBy: memberId,
+            packSize: packSize,
           );
     }
 
@@ -238,7 +239,7 @@ class _AdminEntryPageState extends ConsumerState<AdminEntryPage> {
         key: _deckKey,
         items: allItems,
         qtyByItem: {for (final it in allItems) it.id: qtyOf(it)},
-        onSet: (item, q) => set(item, q),
+        onSet: (item, q, {packSize}) => set(item, q, packSize: packSize),
         showImages: ref.watch(showItemImagesProvider).valueOrNull ?? false,
         compact: keyboardOpen,
       );

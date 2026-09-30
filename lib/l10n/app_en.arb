@@ -307,6 +307,12 @@
   "adminCatalogCategoryLabel": "Category",
   "adminCatalogCategoryRequired": "Enter a category",
   "catalogImageUrlLabel": "Image URL (optional)",
+  "catalogUnitLabel": "Unit (optional)",
+  "catalogPackSizesLabel": "Pack sizes",
+  "catalogPackSizeHint": "Size",
+  "catalogPackSizeAdd": "Add",
+  "catalogPackSizeDuplicate": "That size is already added",
+  "catalogPackSizeInvalid": "Enter a size greater than 0",
   "adminMembersShopsCount": "{count, plural, =1{• 1 shop} other{• {count} shops}}",
   "@adminMembersShopsCount": {
     "placeholders": {
