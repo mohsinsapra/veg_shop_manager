@@ -253,6 +253,11 @@ class EntryCard extends StatelessWidget {
   final ValueChanged<double>? onQtyEntered;
   final VoidCallback? onNext;
   final FocusNode? focusNode;
+
+  /// Optional pack-size chip row (+ summary) shown between the name and the
+  /// stepper, for items with predefined sizes. Null for plain items — no
+  /// layout change from before this existed.
+  final Widget? sizeSelector;
   const EntryCard({
     super.key,
     required this.name,
@@ -262,6 +267,7 @@ class EntryCard extends StatelessWidget {
     this.onQtyEntered,
     this.onNext,
     this.focusNode,
+    this.sizeSelector,
   });
 
   @override
@@ -293,6 +299,11 @@ class EntryCard extends StatelessWidget {
                 ),
               ),
             ),
+            if (sizeSelector != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: sizeSelector,
+              ),
             EntryQtyStepper(
               qty: qty,
               onDecrement: onDecrement,

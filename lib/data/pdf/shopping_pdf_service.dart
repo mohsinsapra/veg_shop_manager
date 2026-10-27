@@ -7,6 +7,15 @@ import '../../core/utils/qty_format.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import '../../domain/entities/shop_entity.dart';
 
+/// One printable row's identity + label after expanding a catalog item's
+/// pack sizes (each size becomes its own row); plain items are a single
+/// entry whose key is just the itemId.
+class _ExpandedItem {
+  final String key; // matches itemSizeKey(itemId, packSize)
+  final String label;
+  const _ExpandedItem(this.key, this.label);
+}
+
 /// Which columns the combined admin grid should include.
 enum GridTotalMode { shopsAndTotal, totalOnly, shopsOnly }
 
@@ -67,6 +76,25 @@ class ShoppingPdfService {
   List<CatalogItemEntity> _ordered(List<CatalogItemEntity> catalog) =>
       catalog.where((c) => c.active).toList()
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
+  /// Expands each active catalog item into one row per pack size (sizes
+  /// ascending), in catalog order; items without sizes stay a single row.
+  List<_ExpandedItem> _expandRows(List<CatalogItemEntity> catalog) {
+    final out = <_ExpandedItem>[];
+    for (final item in _ordered(catalog)) {
+      if (item.packSizes.isEmpty) {
+        out.add(_ExpandedItem(item.id, item.name));
+        continue;
+      }
+      final unit = item.unit.isEmpty ? 'kg' : item.unit;
+      final sizes = [...item.packSizes]..sort();
+      for (final size in sizes) {
+        out.add(_ExpandedItem(
+            itemSizeKey(item.id, size), '${item.name} ${fmtQty(size)}$unit'));
+      }
+    }
+    return out;
+  }
 
   /// Core single-page grid: ONE continuous table with three item-blocks laid
   /// side by side (like the paper), so there are no gaps between sub-tables.
@@ -174,7 +202,9 @@ class ShoppingPdfService {
     required DateTime date,
     required List<ShopEntity> shops,
     required List<CatalogItemEntity> catalog,
-    required Map<String, Map<String, double>> qtyByItemShop, // itemId -> shopId -> qty
+    // itemSizeKey(itemId, packSize) -> shopId -> qty; plain items key by
+    // itemId alone, sized items key by "itemId_<size>" (see itemSizeKey).
+    required Map<String, Map<String, double>> qtyByItemShop,
     required AppLocalizations l10n,
     GridTotalMode totalMode = GridTotalMode.shopsAndTotal,
   }) async {
@@ -186,8 +216,8 @@ class ShoppingPdfService {
       GridTotalMode.totalOnly => ['T'],
     };
     final rows = [
-      for (final item in _ordered(catalog))
-        _buildComboRow(item, activeShops, qtyByItemShop[item.id] ?? const {},
+      for (final row in _expandRows(catalog))
+        _buildComboRow(row, activeShops, qtyByItemShop[row.key] ?? const {},
             totalMode),
     ];
     return _paperGrid(
@@ -199,7 +229,7 @@ class ShoppingPdfService {
     );
   }
 
-  _PaperRow _buildComboRow(CatalogItemEntity item, List<ShopEntity> shops,
+  _PaperRow _buildComboRow(_ExpandedItem row, List<ShopEntity> shops,
       Map<String, double> perShop, GridTotalMode totalMode) {
     var total = 0.0;
     final shopCells = <String>[];
@@ -213,7 +243,7 @@ class ShoppingPdfService {
       GridTotalMode.shopsOnly => shopCells,
       GridTotalMode.totalOnly => [total > 0 ? fmtQty(total) : ''],
     };
-    return _PaperRow(item.name, cells);
+    return _PaperRow(row.label, cells);
   }
 
   /// One shop's full sheet — the same paper layout with a single quantity
@@ -223,13 +253,14 @@ class ShoppingPdfService {
     required String shopCode,
     required DateTime date,
     required List<CatalogItemEntity> catalog,
+    // itemSizeKey(itemId, packSize) -> qty; see adminFullGrid's qtyByItemShop.
     required Map<String, double> qtyByItem,
     required AppLocalizations l10n,
   }) async {
     final rows = [
-      for (final item in _ordered(catalog))
-        _PaperRow(item.name,
-            [(qtyByItem[item.id] ?? 0) > 0 ? fmtQty(qtyByItem[item.id]!) : '']),
+      for (final row in _expandRows(catalog))
+        _PaperRow(row.label,
+            [(qtyByItem[row.key] ?? 0) > 0 ? fmtQty(qtyByItem[row.key]!) : '']),
     ];
     return _paperGrid(
       title: 'Frutas Deliciosas - $shopName',

@@ -60,7 +60,7 @@ void main() {
             body: SwipeEntryDeck(
               items: items,
               qtyByItem: const {},
-              onSet: (item, q) async => set[item.id] = q,
+              onSet: (item, q, {packSize}) async => set[item.id] = q,
             ),
           ),
         ),
@@ -117,7 +117,7 @@ void main() {
             body: SwipeEntryDeck(
               items: items,
               qtyByItem: const {},
-              onSet: (item, q) async => set[item.id] = q,
+              onSet: (item, q, {packSize}) async => set[item.id] = q,
             ),
           ),
         ),
@@ -162,7 +162,7 @@ void main() {
             body: SwipeEntryDeck(
               items: items,
               qtyByItem: const {},
-              onSet: (item, q) async => set[item.id] = q,
+              onSet: (item, q, {packSize}) async => set[item.id] = q,
             ),
           ),
         ),
@@ -200,7 +200,7 @@ void main() {
             body: SwipeEntryDeck(
               items: items,
               qtyByItem: const {},
-              onSet: (item, q) async => set[item.id] = q,
+              onSet: (item, q, {packSize}) async => set[item.id] = q,
             ),
           ),
         ),

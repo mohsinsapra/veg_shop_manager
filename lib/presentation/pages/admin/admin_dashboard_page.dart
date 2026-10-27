@@ -22,6 +22,7 @@ class AdminDashboardPage extends ConsumerWidget {
     final shopName = {for (final s in shops) s.id: '${s.name} (${s.code})'};
     final catalog = ref.watch(catalogProvider).valueOrNull ?? const [];
     final orderById = {for (final c in catalog) c.id: c.sortOrder};
+    final unitById = {for (final c in catalog) c.id: c.unit};
 
     return entriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -45,16 +46,34 @@ class AdminDashboardPage extends ConsumerWidget {
           );
         }
 
+        // Grouped by item+size (itemSizeKey) so e.g. 5kg and 10kg boxes of
+        // the same item show as separate lines instead of merging.
         final byItem = <String, List<EntryEntity>>{};
         for (final e in entries) {
-          byItem.putIfAbsent(e.itemName, () => []).add(e);
+          byItem
+              .putIfAbsent(itemSizeKey(e.itemId, e.packSize), () => [])
+              .add(e);
         }
-        // Order the shopping list by catalog (paper) order.
-        final itemNames = byItem.keys.toList()
+        String labelFor(String key) {
+          final e = byItem[key]!.first;
+          if (e.packSize == null) return e.itemName;
+          final unit = unitById[e.itemId];
+          final u = (unit == null || unit.isEmpty) ? 'kg' : unit;
+          return '${e.itemName} ${fmtQty(e.packSize!)}$u';
+        }
+
+        // Order the shopping list by catalog (paper) order, then by size.
+        final itemKeys = byItem.keys.toList()
           ..sort((a, b) {
-            final sa = orderById[byItem[a]!.first.itemId] ?? 1 << 30;
-            final sb = orderById[byItem[b]!.first.itemId] ?? 1 << 30;
-            return sa != sb ? sa.compareTo(sb) : a.compareTo(b);
+            final ea = byItem[a]!.first;
+            final eb = byItem[b]!.first;
+            final sa = orderById[ea.itemId] ?? 1 << 30;
+            final sb = orderById[eb.itemId] ?? 1 << 30;
+            if (sa != sb) return sa.compareTo(sb);
+            final sizeA = ea.packSize ?? 0;
+            final sizeB = eb.packSize ?? 0;
+            if (sizeA != sizeB) return sizeA.compareTo(sizeB);
+            return labelFor(a).compareTo(labelFor(b));
           });
 
         final totalUnits = entries.fold<double>(0, (s, e) => s + e.quantity);
@@ -73,7 +92,7 @@ class AdminDashboardPage extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      context.l10n.adminDashboardHeaderSummary(itemNames.length,
+                      context.l10n.adminDashboardHeaderSummary(itemKeys.length,
                           fmtQty(boughtUnits), fmtQty(totalUnits)),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
@@ -118,10 +137,10 @@ class AdminDashboardPage extends ConsumerWidget {
                 onRefresh: () => refreshAppData(ref),
                 child: ListView(
                   children: [
-                    for (final name in itemNames)
+                    for (final key in itemKeys)
                       _ItemTile(
-                        name: name,
-                        rows: byItem[name]!,
+                        name: labelFor(key),
+                        rows: byItem[key]!,
                         shopName: shopName,
                       ),
                   ],
@@ -173,7 +192,8 @@ class AdminDashboardPage extends ConsumerWidget {
         ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
       final qty = <String, Map<String, double>>{};
       for (final e in entries) {
-        qty.putIfAbsent(e.itemId, () => {})[e.shopId] = e.quantity;
+        qty.putIfAbsent(itemSizeKey(e.itemId, e.packSize), () => {})[e.shopId] =
+            e.quantity;
       }
       return svc.adminFullGrid(
         date: DateTime.now(),
@@ -197,7 +217,7 @@ class AdminDashboardPage extends ConsumerWidget {
               : shops.first);
       final qtyByItem = {
         for (final e in entries.where((e) => e.shopId == shopId))
-          e.itemId: e.quantity,
+          itemSizeKey(e.itemId, e.packSize): e.quantity,
       };
       return svc.shopSheet(
         shopName: shop.name,

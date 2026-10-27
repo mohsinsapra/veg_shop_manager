@@ -221,6 +221,16 @@ class HistoryPage extends ConsumerWidget {
                 }
                 final entries =
                     entriesAsync.valueOrNull ?? const <EntryEntity>[];
+                final catalog =
+                    ref.watch(catalogProvider).valueOrNull ?? const [];
+                final unitById = {for (final ci in catalog) ci.id: ci.unit};
+                String labelFor(EntryEntity e) {
+                  if (e.packSize == null) return e.itemName;
+                  final unit = unitById[e.itemId];
+                  final u = (unit == null || unit.isEmpty) ? 'kg' : unit;
+                  return '${e.itemName} ${fmtQty(e.packSize!)}$u';
+                }
+
                 return Column(
                   children: [
                     Divider(
@@ -235,7 +245,7 @@ class HistoryPage extends ConsumerWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                e.itemName,
+                                labelFor(e),
                                 style: const TextStyle(fontSize: 14),
                               ),
                             ),
@@ -381,7 +391,8 @@ class HistoryPage extends ConsumerWidget {
     for (final e in entries) {
       final id = _resolveCatalogId(e, catalog);
       if (id == null) continue;
-      final byShop = qty.putIfAbsent(id, () => {});
+      final key = itemSizeKey(id, e.packSize);
+      final byShop = qty.putIfAbsent(key, () => {});
       byShop[e.shopId] = (byShop[e.shopId] ?? 0) + e.quantity;
     }
     return svc.adminFullGrid(
@@ -422,7 +433,8 @@ class HistoryPage extends ConsumerWidget {
       for (final e in entries.where((e) => e.shopId == shopId)) {
         final id = _resolveCatalogId(e, catalog);
         if (id == null) continue;
-        qtyByItem[id] = (qtyByItem[id] ?? 0) + e.quantity;
+        final key = itemSizeKey(id, e.packSize);
+        qtyByItem[key] = (qtyByItem[key] ?? 0) + e.quantity;
       }
       return svc.shopSheet(
         shopName: shop.name,

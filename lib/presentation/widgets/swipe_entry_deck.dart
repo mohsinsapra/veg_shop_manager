@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/constants/item_images.dart';
 import '../../core/l10n/l10n_extension.dart';
+import '../../core/utils/qty_format.dart';
 import '../../domain/entities/catalog_item_entity.dart';
 import 'entry_item_controls.dart';
 
@@ -14,7 +15,12 @@ import 'entry_item_controls.dart';
 class SwipeEntryDeck extends StatefulWidget {
   final List<CatalogItemEntity> items;
   final Map<String, double> qtyByItem;
-  final Future<void> Function(CatalogItemEntity item, double qty) onSet;
+
+  /// Per-size quantities (itemId -> packSize -> qty) for items with
+  /// predefined pack sizes; absent/empty for plain items.
+  final Map<String, Map<double, double>> sizeQtyByItem;
+  final Future<void> Function(CatalogItemEntity item, double qty,
+      {double? packSize}) onSet;
 
   /// When true the product photo fills the card as a background (owner
   /// setting; defaults to text-only).
@@ -27,6 +33,7 @@ class SwipeEntryDeck extends StatefulWidget {
     super.key,
     required this.items,
     required this.qtyByItem,
+    this.sizeQtyByItem = const {},
     required this.onSet,
     this.showImages = false,
     this.compact = false,
@@ -51,6 +58,37 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
   final Map<String, FocusNode> _qtyFocus = {};
 
   FocusNode _focusFor(String id) => _qtyFocus.putIfAbsent(id, FocusNode.new);
+
+  // Which pack size is currently selected per sized item.
+  final Map<String, double> _selectedSize = {};
+
+  /// The active pack size for [item], or null for a plain item.
+  double? _selectedSizeFor(CatalogItemEntity item) {
+    if (item.packSizes.isEmpty) return null;
+    final sizes = [...item.packSizes]..sort();
+    final sel = _selectedSize[item.id];
+    if (sel != null && sizes.contains(sel)) return sel;
+    return sizes.first;
+  }
+
+  /// The quantity to show for [item]: its selected size's qty when sized,
+  /// else the plain qty — never auto-added, just what's already committed.
+  double _qtyFor(CatalogItemEntity item) {
+    final size = _selectedSizeFor(item);
+    if (size == null) return widget.qtyByItem[item.id] ?? 0;
+    return widget.sizeQtyByItem[item.id]?[size] ?? 0;
+  }
+
+  void _selectSize(CatalogItemEntity item, double size) {
+    setState(() {
+      _selectedSize[item.id] = size;
+      if (_isMobile) {
+        final q = widget.sizeQtyByItem[item.id]?[size] ?? 0;
+        _kbCtrl.text = q == 0 ? '' : fmtQty(q);
+        _replaceOnNextKey = true;
+      }
+    });
+  }
 
   // Mobile (incl. mobile browsers) gets a custom in-app numeric keypad
   // instead of the system keyboard: no focus node is ever requested, and the
@@ -130,13 +168,15 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     final flew = _drag.dx.abs() > 100; // it flew off rather than snapping back
     if (flew) {
       final item = widget.items[_i];
-      final qty = widget.qtyByItem[item.id] ?? 0;
+      final qty = _qtyFor(item);
       // A right-swipe commits a TYPED quantity but never auto-adds 1: people
       // swipe right just to move on, and phantom 1-unit entries piled up.
       // Adds happen only via a typed qty, the + stepper, or search-select.
       if (_addOnFinish && _isMobile) {
         final typed = parseQty(_kbCtrl.text);
-        if (typed > 0 && typed != qty) widget.onSet(item, typed);
+        if (typed > 0 && typed != qty) {
+          widget.onSet(item, typed, packSize: _selectedSizeFor(item));
+        }
       }
       setState(() {
         _i++;
@@ -196,11 +236,13 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
   void _keyEnter() {
     final item = widget.items[_i];
     final q = parseQty(_kbCtrl.text);
-    final current = widget.qtyByItem[item.id] ?? 0;
+    final current = _qtyFor(item);
     // Enter only commits a typed quantity; with nothing (or 0) typed it just
     // advances — most cards are skipped, so zero must NOT add the item.
     // Adding without typing happens only via the + stepper or search-select.
-    if (q > 0 && q != current) widget.onSet(item, q);
+    if (q > 0 && q != current) {
+      widget.onSet(item, q, packSize: _selectedSizeFor(item));
+    }
     _goTo(_i + 1);
   }
 
@@ -228,7 +270,7 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     }
 
     final item = items[_i];
-    final qty = widget.qtyByItem[item.id] ?? 0;
+    final qty = _qtyFor(item);
 
     return Column(
       children: [
@@ -270,7 +312,7 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
                         opacity: 0.6,
                         child: _cardShell(
                           items[_i + 1],
-                          widget.qtyByItem[items[_i + 1].id] ?? 0,
+                          _qtyFor(items[_i + 1]),
                           interactive: false,
                         ),
                       ),
@@ -421,12 +463,48 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
     );
   }
 
+  /// The size-picker chip row shown on a sized item's card, plus a small
+  /// "2×5kg · 1×10kg" summary of every size already ordered for this item.
+  Widget _sizeChips(CatalogItemEntity item, double selected) {
+    final sizes = [...item.packSizes]..sort();
+    final unit = item.unit.isEmpty ? 'kg' : item.unit;
+    final qtyBySize = widget.sizeQtyByItem[item.id] ?? const {};
+    final summary = sizes
+        .where((s) => (qtyBySize[s] ?? 0) > 0)
+        .map((s) => '${fmtQty(qtyBySize[s] ?? 0)}×${fmtQty(s)}$unit')
+        .join(' · ');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 6,
+          children: [
+            for (final s in sizes)
+              ChoiceChip(
+                label: Text('${fmtQty(s)}$unit'),
+                visualDensity: VisualDensity.compact,
+                selected: s == selected,
+                onSelected: (_) => _selectSize(item, s),
+              ),
+          ],
+        ),
+        if (summary.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(summary, style: const TextStyle(fontSize: 11)),
+          ),
+      ],
+    );
+  }
+
   Widget _cardShell(
     CatalogItemEntity item,
     double qty, {
     required bool interactive,
   }) {
     final active = qty > 0;
+    final selectedSize = _selectedSizeFor(item);
     // Overlay strength based on horizontal drag (only for the top card).
     final t = interactive ? (_drag.dx / 140).clamp(-1.0, 1.0) : 0.0;
     final photoUrl = !widget.showImages
@@ -544,8 +622,20 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (item.packSizes.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 6),
+                                child: IgnorePointer(
+                                  ignoring: !interactive,
+                                  child: _sizeChips(item, selectedSize!),
+                                ),
+                              ),
                             EntryQtyStepper(
-                              key: ValueKey(item.id),
+                              // A distinct key per selected size forces a
+                              // fresh field (and re-read of `qty`) instead of
+                              // silently keeping stale text when the member
+                              // switches sizes on an already-focused field.
+                              key: ValueKey('${item.id}_${selectedSize ?? ''}'),
                               qty: qty,
                               big: true,
                               controller: interactive && _isMobile
@@ -561,11 +651,14 @@ class SwipeEntryDeckState extends State<SwipeEntryDeck>
                                       (qty - 1)
                                           .clamp(0, double.infinity)
                                           .toDouble(),
+                                      packSize: selectedSize,
                                     )
                                   : null,
-                              onIncrement: () => widget.onSet(item, qty + 1),
+                              onIncrement: () => widget.onSet(item, qty + 1,
+                                  packSize: selectedSize),
                               onQtyEntered: interactive
-                                  ? (v) => widget.onSet(item, v)
+                                  ? (v) =>
+                                      widget.onSet(item, v, packSize: selectedSize)
                                   : null,
                               onNext: interactive ? () => _goTo(_i + 1) : null,
                             ),

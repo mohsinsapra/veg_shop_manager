@@ -25,7 +25,26 @@
       "Bash(sed -i '' 's/Frutas Deliciosas — Fruit Shop/Frutas Deliciosas — Autoservicio/g' web/index.html web/manifest.json)",
       "Bash(sed -i '' 's/android:label=\"veg_shop_manager\"/android:label=\"Frutas Deliciosas\"/' android/app/src/main/AndroidManifest.xml)",
       "Bash(sed -i '' 's/<string>Veg Shop Manager<\\\\/string>/<string>Frutas Deliciosas<\\\\/string>/' ios/Runner/Info.plist)",
-      "Bash(sed -i '' 's/<string>veg_shop_manager<\\\\/string>/<string>Frutas Deliciosas<\\\\/string>/' ios/Runner/Info.plist)"
+      "Bash(sed -i '' 's/<string>veg_shop_manager<\\\\/string>/<string>Frutas Deliciosas<\\\\/string>/' ios/Runner/Info.plist)",
+      "Bash(flutter test *)",
+      "Read(//tmp/**)",
+      "Bash(git stash *)",
+      "Bash(git check-ignore *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(make deploy-push *)",
+      "Bash(curl -s https://app.frutasdeliciosas.store/flutter_bootstrap.js?cb=__TRACKED_VAR__)",
+      "Bash(md5)",
+      "Bash(curl -s https://app.frutasdeliciosas.store/flutter_bootstrap.js?cb=__TRACKED_VAR____TRACKED_VAR__)",
+      "Bash(md5 -q build/web/flutter_bootstrap.js)",
+      "Bash(curl -s https://app.frutasdeliciosas.store/flutter_bootstrap.js)",
+      "Bash(curl -sI https://app.frutasdeliciosas.store/)",
+      "Read(//Users/muhammadmohsin/Downloads/**)",
+      "Bash(git push *)",
+      "Bash(curl -s https://app.frutasdeliciosas.store/index.html)",
+      "Bash(md5 -q \"/Users/muhammadmohsin/Documents/Learning/Nabeel Spain/veg_shop_manager_build/flutter_bootstrap.js\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d\\)\\); [print\\(k\\) for k in d if 'catalog' in k.lower\\(\\) or 'unit' in k.lower\\(\\) or 'pack' in k.lower\\(\\)]\")"
     ],
     "deny": []
   }

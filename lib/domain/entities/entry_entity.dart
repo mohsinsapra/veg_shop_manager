@@ -1,7 +1,9 @@
+import '../../core/utils/qty_format.dart';
+
 /// One shop's needed quantity for one catalog item within a cycle.
 /// The admin pivot grid is these rows pivoted: rows = items, columns = shops.
 class EntryEntity {
-  final String id; // deterministic: "<cycleId>_<shopId>_<itemId>"
+  final String id; // deterministic: "<cycleId>_<shopId>_<itemId>[_<size>]"
   final String cycleId;
   final String itemId;
   final String itemName; // denormalized so history/prints stay stable
@@ -11,6 +13,11 @@ class EntryEntity {
   final bool bought;
   final String createdBy; // member id (email)
   final DateTime createdAt;
+
+  /// The pack size this entry is for (e.g. 5 for a 5kg box); null for a plain
+  /// (unsized) item. A shop can hold entries for several sizes of the same
+  /// item at once — each size is a separate doc, see [buildId].
+  final double? packSize;
 
   const EntryEntity({
     required this.id,
@@ -23,10 +30,15 @@ class EntryEntity {
     required this.bought,
     required this.createdBy,
     required this.createdAt,
+    this.packSize,
   });
 
-  static String buildId(String cycleId, String shopId, String itemId) =>
-      '${cycleId}_${shopId}_$itemId';
+  /// Plain items keep the exact previous id scheme; a sized entry appends
+  /// the formatted size so a shop can order several sizes of one item within
+  /// the same cycle (e.g. both 5kg and 10kg boxes of carrots).
+  static String buildId(String cycleId, String shopId, String itemId,
+          {double? packSize}) =>
+      '${cycleId}_${shopId}_${itemSizeKey(itemId, packSize)}';
 
   Map<String, dynamic> toMap() => {
         'cycleId': cycleId,
@@ -38,6 +50,7 @@ class EntryEntity {
         'bought': bought,
         'createdBy': createdBy,
         'createdAt': createdAt.toUtc().toIso8601String(),
+        'packSize': packSize,
       };
 
   factory EntryEntity.fromMap(String id, Map<String, dynamic> map) => EntryEntity(
@@ -53,6 +66,7 @@ class EntryEntity {
         createdAt: map['createdAt'] == null
             ? DateTime.fromMillisecondsSinceEpoch(0, isUtc: true)
             : DateTime.parse(map['createdAt'] as String).toUtc(),
+        packSize: (map['packSize'] as num?)?.toDouble(),
       );
 
   EntryEntity copyWith({double? quantity, String? notes, bool? bought}) => EntryEntity(
@@ -66,6 +80,7 @@ class EntryEntity {
         bought: bought ?? this.bought,
         createdBy: createdBy,
         createdAt: createdAt,
+        packSize: packSize,
       );
 
   @override
@@ -80,9 +95,10 @@ class EntryEntity {
       other.notes == notes &&
       other.bought == bought &&
       other.createdBy == createdBy &&
-      other.createdAt == createdAt;
+      other.createdAt == createdAt &&
+      other.packSize == packSize;
 
   @override
   int get hashCode => Object.hash(id, cycleId, itemId, itemName, shopId,
-      quantity, notes, bought, createdBy, createdAt);
+      quantity, notes, bought, createdBy, createdAt, packSize);
 }

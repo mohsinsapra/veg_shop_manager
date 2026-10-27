@@ -67,6 +67,7 @@ class EntryActions {
     required double quantity,
     required String createdBy,
     String? notes,
+    double? packSize,
   }) =>
       submitQuantityToShops(
         shopIds: [shopId],
@@ -75,6 +76,7 @@ class EntryActions {
         quantity: quantity,
         createdBy: createdBy,
         notes: notes,
+        packSize: packSize,
       );
 
   /// Same quantity for one item across many shops in one batched write.
@@ -85,6 +87,7 @@ class EntryActions {
     required double quantity,
     required String createdBy,
     String? notes,
+    double? packSize,
   }) async {
     final now = DateTime.now().toUtc();
     final cycle = await _ensureCycle(now);
@@ -97,6 +100,7 @@ class EntryActions {
       createdBy: createdBy,
       now: now,
       notes: notes,
+      packSize: packSize,
     );
   }
 
